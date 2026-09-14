@@ -21,7 +21,8 @@
 
 ```text
 安装它：https://github.com/Shanasama/yes-codex-model
-照仓库里的 AGENTS.md 一条龙装好，装完告诉我启动脚本在哪，我自己启动。
+先读仓库里的 AGENTS.md，按里面的步骤先做环境体检（Node、.NET SDK、磁盘空间），
+再一条龙装好。装完把体检结果和启动脚本路径告诉我，我自己启动。
 ```
 
 AI 会自己克隆仓库、先跑一次环境体检（Node、.NET SDK、磁盘空间），再装好插件和完整 GIF
@@ -167,8 +168,9 @@ Send the repository link together with this text to any agent that can read the 
 
 ```text
 Install it: <paste the GitHub link here>
-Follow the repository's AGENTS.md end to end, then tell me where the launcher is.
-I will start it myself.
+Read the repository's AGENTS.md first and run the environment check-up it describes
+(Node, .NET SDK, free disk space), then follow it end to end.
+Tell me the check-up result and where the launcher is. I will start it myself.
 ```
 
 The agent clones the repo, runs an environment check-up (Node, .NET SDK, free disk space),
