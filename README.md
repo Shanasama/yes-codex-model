@@ -7,6 +7,12 @@
 内置一套「酒狐（WineFox）」皮肤，素材来自 B 站 UP 主酒石酸君的 Minecraft YSM 皮肤，
 本仓库是第三方 Codex 适配。
 
+> **它会动我的 Codex 吗？** 会，但只动副本：安装时把你的 Codex 整份复制到
+> `%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes\`（实测约 1.8 GB），之后只在
+> 这份可写副本里改。原版 Store 版 Codex 一个字节不动，权限、所有者、文件都保持原样。
+> 不想要了，退出 Codex 后把这个目录整个删掉就回到原样。为什么必须这么做见
+> [下面那节](#会复制一份-codex以及为什么)。
+
 ## 快速开始
 
 ### 1. 让 AI 装（推荐）
@@ -60,14 +66,30 @@ Windows 电脑上可以直接双击运行。
 一键应用到 Codex，以及完整动画运行时的一键开启与恢复。导入会拦掉脚本、可执行文件、
 危险路径和异常大的压缩包。
 
-## 完整 GIF 是怎么做的
+## 会复制一份 Codex（以及为什么）
 
-Windows Store 版 Codex 的安装目录不能直接写入，所以脚本会把当前 Codex 复制到
-`%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes`，只修改这份用户可写的副本。
-脚本不会改 WindowsApps 的所有者或权限，原来的 Store 版 Codex 仍然保留。
+Codex 桌面版（Microsoft Store 版）装在 `C:\Program Files\WindowsApps\...` 里，这个目录
+Windows 只给读权限：往里写会被系统直接拒绝，而且它受 Store 的完整性保护，就算绕过权限改
+掉了，下次 Codex 一更新，改动也会被整份覆盖回去。
 
-第一次需要额外复制约 1.8 GB。补丁只认代码里记录过的 Codex 版本和 SHA-256：Codex 更新后
-版本对不上就拒绝安装，而不是把新版程序改坏。被旧版本打过补丁的运行时可以原地升级。
+所以想让它按 GIF 动，只能绕开原版：
+
+1. 把当前版本的 Codex **整份复制**到用户目录
+   `%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes\store-<版本号>\`，实测约
+   1.8 GB、五千多个文件，第一次要等几分钟。
+2. 只改这份副本里的两个打包 JS（`app.asar` 里的主进程和渲染层），让它按宠物目录里
+   `pet.json` 的 `animationPaths` 播放九种状态的 GIF。
+3. 以后启动的是这份副本（`一键启动.cmd` 的最后一步，或
+   `备用启动脚本\启动可写 GIF 运行时.cmd`）。Store 版 Codex 还在原地，照常能打开。
+
+你可能关心的几点：
+
+- **原版没被动过**：脚本不改 WindowsApps 的权限和所有者，只是读它、然后复制。
+- **能反悔**：退出 Codex 后删掉 `shadow-runtimes` 目录就干净了；皮肤工坊里的
+  「恢复兼容模式」也能把副本还原成没打过补丁的状态。
+- **占地方**：一份约 1.8 GB。Codex 升级后版本号变了会再复制一份新的，旧的那份可以自己删。
+- **不是随便哪个版本都能改**：补丁只认代码里记录过的版本和 SHA-256，Codex 更新后如果
+  不认识就直接拒绝安装，而不是把新版程序改坏。被旧版本打过补丁的运行时可以原地升级。
 
 ## 环境要求
 
@@ -106,6 +128,13 @@ edit skins, preview animations and import/export skin packs by double-clicking.
 
 It bundles a "WineFox" skin created by Bilibili creator 酒石酸君 for Minecraft's YSM
 mod; this repository is a third-party Codex adaptation.
+
+> **Does it touch my Codex?** Yes, but only a copy. The installer duplicates your Codex
+> into `%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes\` (about 1.8 GB in
+> practice) and patches only that writable copy. The Microsoft Store install stays
+> byte-for-byte untouched - same files, same permissions, same owner. To undo everything,
+> quit Codex and delete that folder, and you are back to the stock app. The reason for the
+> copy is in [the section below](#it-copies-codex-and-why).
 
 ## Quick start
 
@@ -167,18 +196,34 @@ preview), skin metadata editing, duplicate/export/import of `.codexskin`, one-cl
 to Codex, and install/restore of the full animation runtime. Imports reject scripts,
 executables, dangerous paths and oversized archives.
 
-## How the full GIF playback works
+## It copies Codex (and why)
 
-The Microsoft Store build of Codex lives in a folder that cannot be written to, so the
-installer copies the current Codex into
-`%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes` and only modifies that
-user-writable copy. It never changes the owner or the ACLs of WindowsApps, and the
-original Store build stays untouched.
+Codex Desktop from the Microsoft Store lives in `C:\Program Files\WindowsApps\...`, which
+Windows only exposes read-only: writes are rejected outright, and the folder is covered by
+Store integrity checks, so even a forced edit would be wiped by the next Codex update.
 
-The first run copies about 1.8 GB. The patch only accepts the Codex versions and SHA-256
-hashes recorded in the source; after a Codex update it refuses to install instead of
-breaking a newer build. Runtimes patched by an older version of this project are upgraded
-in place.
+That leaves one way to get real GIF animations:
+
+1. **Copy the whole current Codex** into the user profile at
+   `%LOCALAPPDATA%\OpenAI\Codex\skin-engine\shadow-runtimes\store-<version>\` - about
+   1.8 GB and 5000+ files, so the first run takes a few minutes.
+2. Patch only that copy: two bundled JS files inside `app.asar` (main process and renderer)
+   so the pet plays GIFs from `animationPaths` in `pet.json` for all nine states.
+3. Launch that copy from then on (the last step of `一键启动.cmd`, or
+   `备用启动脚本\启动可写 GIF 运行时.cmd`). The Store build stays where it is and still
+   opens normally.
+
+Worth knowing:
+
+- **Your install is untouched.** The scripts never change WindowsApps permissions or
+  ownership; they only read and copy it.
+- **It is reversible.** Quit Codex and delete the `shadow-runtimes` folder, or use restore
+  compatibility mode in the studio to unpatch the copy.
+- **It costs disk.** About 1.8 GB per Codex version. A Codex update creates a new
+  `store-<version>` folder; older ones can be deleted by hand.
+- **Only known builds are patched.** The patch accepts only the Codex versions and SHA-256
+  hashes recorded in the source; after an update it refuses to install instead of breaking
+  a newer build. Runtimes patched by older releases are upgraded in place.
 
 ## Requirements
 
