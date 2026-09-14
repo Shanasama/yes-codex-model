@@ -27,11 +27,24 @@ cd "$env:USERPROFILE\codex-skin-engine"
 
 没有 git 就下载 ZIP 解压到同样位置。
 
-2. 先看会做什么，这一步不改任何文件：
+2. 先检查环境，并且把体检结果告诉用户。这一步不改任何文件：
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_click.ps1 -Plan
 ```
+
+输出 JSON 里的 `environment` 就是体检结果，逐项对照：
+
+| 字段 | 含义 | 不合格怎么办 |
+| --- | --- | --- |
+| `node.ok`、`node.version` | Node.js 是不是 20 以上（脚本也会用 Codex 自带的 Node） | 装 Node.js LTS 20+，或先启动一次 Codex |
+| `dotnetSdk.ok`、`dotnetSdk.versions` | 有没有 .NET SDK（只装运行时不等于有） | 缺就别承诺“装完就能改皮肤”：插件、皮肤、GIF 运行时照样装，工坊要等补 .NET 7 SDK，或把 SDK 的 ZIP 解压到 `<仓库>\.dotnet-sdk\`（里面要有 `dotnet.exe`） |
+| `studioBuilt` | `dist\studio\SkinStudio.exe` 是不是已经编译好 | 它是 `false` 且 `dotnetSdk.ok` 也是 `false` 时，明确告诉用户这次工坊装不上 |
+| `freeSpace.gb` | 用户目录所在卷的剩余空间 | 低于 3 GB 先提醒用户：完整 GIF 运行时要再复制一份约 1.8 GB 的 Codex |
+| `package`、`version` | 有没有 Microsoft Store 版 Codex | 没有就改走下面第 4 步的 `-PluginOnly`，并说明完整 GIF 播放需要 Store 版 |
+
+体检结果要写进汇报里（例如「Node 24 ✓、没有 .NET SDK ✗、C 盘剩 80 GB ✓」），
+`environment.warnings` 里的每一条都要先跟用户解释清楚，再开始装。
 
 3. 正式安装。免交互、不关 Codex、不启动 Codex：
 
@@ -109,11 +122,25 @@ cd "$env:USERPROFILE\codex-skin-engine"
 
 If git is unavailable, download the ZIP and extract it to the same location.
 
-2. Preview what will happen. This step changes nothing:
+2. Check the environment first and report the result to the user. This step
+   changes nothing:
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_click.ps1 -Plan
 ```
+
+The `environment` object in that JSON is the check-up. Go through it:
+
+| Field | Meaning | What to do when it fails |
+| --- | --- | --- |
+| `node.ok`, `node.version` | Node.js 20 or newer (the scripts also find the Node bundled with Codex) | Install Node.js LTS 20+, or start Codex once |
+| `dotnetSdk.ok`, `dotnetSdk.versions` | Whether a .NET SDK exists (a runtime alone is not enough) | Do not promise skin editing in that case: the plugin, skin and GIF runtime still install, but the studio has to wait for the .NET 7 SDK, or for the SDK ZIP to be unzipped into `<repository>\.dotnet-sdk\` (it must contain `dotnet.exe`) |
+| `studioBuilt` | Whether `dist\studio\SkinStudio.exe` is already built | When this is `false` and `dotnetSdk.ok` is also `false`, tell the user the studio cannot be installed this time |
+| `freeSpace.gb` | Free space on the volume that holds the user profile | Below 3 GB, warn the user: the full GIF runtime copies another ~1.8 GB of Codex |
+| `package`, `version` | Whether the Microsoft Store build of Codex is present | If not, switch to `-PluginOnly` in step 4 and say that full GIF playback needs the Store build |
+
+Put the result in your report (for example "Node 24 OK, no .NET SDK, 80 GB free on C:")
+and explain every entry in `environment.warnings` before you start installing.
 
 3. Install. Non-interactive, does not close Codex, does not start Codex:
 

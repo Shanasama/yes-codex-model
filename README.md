@@ -24,7 +24,8 @@
 照仓库里的 AGENTS.md 一条龙装好，装完告诉我启动脚本在哪，我自己启动。
 ```
 
-AI 会自己克隆仓库、检查环境、装好插件和完整 GIF 运行时，然后把启动脚本路径告诉你。
+AI 会自己克隆仓库、先跑一次环境体检（Node、.NET SDK、磁盘空间），再装好插件和完整 GIF
+运行时，然后把体检结果和启动脚本路径告诉你。
 你只要完全退出 Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自定义宠物 里选中
 这套皮肤。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
 
@@ -109,6 +110,15 @@ Windows 10/11、Codex 桌面版（要完整 GIF 播放就用 Microsoft Store 版
 （也会自动找 Codex 自带的 Node）。第一次编译皮肤工坊还需要 .NET 7 SDK；没有的话插件、
 皮肤和 GIF 运行时照样装好，安装脚本会明确报「部分完成」并告诉你补哪一步。
 
+想自己先体检，不改任何文件：
+
+```powershell
+powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_click.ps1 -Plan
+```
+
+输出的 JSON 里 `environment` 一节就是体检结果：Node 版本、.NET SDK 有没有、工坊编译了没、
+用户目录所在盘剩多少空间，以及需要提前告诉用户的 `warnings`。
+
 ## 目录结构
 
 | 路径 | 内容 |
@@ -161,10 +171,11 @@ Follow the repository's AGENTS.md end to end, then tell me where the launcher is
 I will start it myself.
 ```
 
-The agent clones the repo, checks the environment, installs the plugin plus the full GIF
-runtime, and reports the launcher path back to you. You then only have to fully quit Codex
-and double-click that launcher, and finally pick the skin in Codex settings → Pets →
-Custom pets. The machine-readable steps live in [AGENTS.md](AGENTS.md).
+The agent clones the repo, runs an environment check-up (Node, .NET SDK, free disk space),
+installs the plugin plus the full GIF runtime, and reports the check-up result together
+with the launcher path. You then only have to fully quit Codex and double-click that
+launcher, and finally pick the skin in Codex settings → Pets → Custom pets. The
+machine-readable steps live in [AGENTS.md](AGENTS.md).
 
 ### 2. Or install it by double-clicking
 
@@ -255,6 +266,16 @@ Worth knowing:
 Windows 10/11, Codex Desktop (use the Microsoft Store build for full GIF playback), and
 Node.js 20 or newer - the installers also find the Node bundled with Codex. The first
 studio build additionally needs the .NET 7 SDK.
+
+To run the check-up yourself, without changing anything:
+
+```powershell
+powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_click.ps1 -Plan
+```
+
+The `environment` section of that JSON is the check-up: Node version, whether a .NET SDK
+exists, whether the studio is already built, free space on the profile drive, and the
+`warnings` worth telling the user about up front.
 
 ## Repository layout
 

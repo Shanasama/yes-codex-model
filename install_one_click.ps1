@@ -247,6 +247,69 @@ function Write-PetSelectionHint {
     }
 }
 
+function Get-DotnetSdkList {
+    param([string]$Executable)
+    if (-not $Executable) { return @() }
+    $output = @()
+    try { $output = @(& $Executable --list-sdks 2>$null) } catch { return @() }
+    if ($LASTEXITCODE -ne 0) { return @() }
+    return @($output | Where-Object { "$_" -match '^\s*\d+\.' } | ForEach-Object { "$_".Trim() })
+}
+
+function Get-EnvironmentReport {
+    # -Plan 时顺手做的环境体检：AI 拿到 JSON 就能先跟用户说清楚缺什么，而不是装到一半才发现。
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$NodeExecutable
+    )
+    $nodeVersion = ""
+    try { $nodeVersion = ("$(& $NodeExecutable --version 2>$null)").Trim() } catch { }
+    $nodeOk = $false
+    if ($nodeVersion -match '^v?(\d+)') { $nodeOk = [int]$Matches[1] -ge 20 }
+
+    $localSdk = Join-Path $ProjectRoot ".dotnet-sdk\dotnet.exe"
+    $sdkVersions = @()
+    $sdkSource = $null
+    if (Test-Path -LiteralPath $localSdk) {
+        $sdkVersions = @(Get-DotnetSdkList -Executable $localSdk)
+        if ($sdkVersions.Count -gt 0) { $sdkSource = $localSdk }
+    }
+    if (-not $sdkSource) {
+        $dotnetCommand = Get-Command dotnet -ErrorAction SilentlyContinue
+        if ($dotnetCommand) {
+            $sdkVersions = @(Get-DotnetSdkList -Executable $dotnetCommand.Source)
+            if ($sdkVersions.Count -gt 0) { $sdkSource = $dotnetCommand.Source }
+        }
+    }
+
+    $driveRoot = $null
+    $freeGb = $null
+    try {
+        $driveRoot = [IO.Path]::GetPathRoot($env:LOCALAPPDATA)
+        $freeGb = [math]::Round(([IO.DriveInfo]::new($driveRoot).AvailableFreeSpace / 1GB), 1)
+    } catch { }
+
+    $warnings = New-Object System.Collections.Generic.List[string]
+    if (-not $nodeOk) {
+        $warnings.Add("Node.js 版本低于 20 或读不到版本号（$nodeVersion）。装 Node.js LTS 20+，或先启动一次 Codex 用自带的 Node。")
+    }
+    if ($sdkVersions.Count -eq 0) {
+        $warnings.Add("没有可用的 .NET SDK（只有 .NET 运行时不等于有 SDK）。插件、酒狐皮肤和 GIF 运行时照样装；皮肤工坊要等补上 .NET 7 SDK，或者把 SDK 的 ZIP 解压到 $ProjectRoot\.dotnet-sdk\（里面要有 dotnet.exe）。")
+    }
+    if ($null -ne $freeGb -and $freeGb -lt 3) {
+        $warnings.Add("$driveRoot 只剩 $freeGb GB：完整 GIF 运行时要在用户目录里再复制一份约 1.8 GB 的 Codex。")
+    }
+
+    [pscustomobject]@{
+        node = @{ path = $NodeExecutable; version = $nodeVersion; ok = $nodeOk }
+        dotnetSdk = @{ path = $sdkSource; versions = @($sdkVersions); ok = ($sdkVersions.Count -gt 0) }
+        localSdkSlot = $localSdk
+        studioBuilt = (Test-Path -LiteralPath (Join-Path $ProjectRoot "dist\studio\SkinStudio.exe") -PathType Leaf)
+        freeSpace = @{ drive = $driveRoot; gb = $freeGb }
+        warnings = @($warnings)
+    }
+}
+
 if (-not (Test-Path -LiteralPath $cliPath -PathType Leaf)) {
     throw "插件文件不完整，找不到：$cliPath"
 }
@@ -256,6 +319,7 @@ if (-not (Test-Path -LiteralPath $shadowInstaller -PathType Leaf)) {
 
 $package = Resolve-StorePackage -Optional:$PluginOnly
 $nodeExe = Resolve-Node -Requested $NodePath
+$environment = if ($Plan) { Get-EnvironmentReport -ProjectRoot $projectRoot -NodeExecutable $nodeExe } else { $null }
 
 $powershellExe = Join-Path ${env:SystemRoot} "System32\WindowsPowerShell\v1.0\powershell.exe"
 if (-not (Test-Path -LiteralPath $powershellExe -PathType Leaf)) {
@@ -273,6 +337,7 @@ if ($PluginOnly) {
             codex = $codexExe
             package = if ($package) { $package.Name } else { $null }
             version = if ($package) { $package.Version } else { $null }
+            environment = $environment
             note = "Plan 模式未登记市场、安装插件或应用皮肤。"
         } | ConvertTo-Json -Depth 5
         exit 0
@@ -310,6 +375,7 @@ if ($Plan) {
         storeExecutable = $package.Executable
         storeAsar = $package.Asar
         shadowInstaller = $shadowInstaller
+        environment = $environment
         note = "Plan 模式未执行插件安装、皮肤应用、文件复制或运行时启动。"
     } | ConvertTo-Json -Depth 5
     exit 0
