@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "winefox-pixel-classic",
+  "name": "WineFox Pixel",
+  "description": "酒石酸君为 Minecraft Yes Steve Model（YSM）创作的 WineFox（酒狐）皮肤之 Codex 适配版，九种状态均可替换为原始 GIF。",
+  "version": "1.0.0",
+  "author": {
+    "name": "酒石酸君"
+  },
+  "license": "LicenseRef-WineFox-Assets",
+  "fallback": "spritesheet.webp",
+  "thumbnail": "animations/idle.gif",
+  "states": {
+    "idle": {
+      "file": "animations/idle.gif",
+      "sha256": "12d2dbd874849dd33459cc4af489cb5157c9931547ed7aaaf1791730dea68cf5"
+    },
+    "running-right": {
+      "file": "animations/running-right.gif",
+      "sha256": "448c37b3a00cba5a321743ff7b0ecbdbc00bd098e22f1d7bfa63ad4b01775ab1"
+    },
+    "running-left": {
+      "file": "animations/running-left.gif",
+      "sha256": "47e5ea4706e44858efa6bb0ed2d2618bdad6a4a6766643640916e949320488f6"
+    },
+    "waving": {
+      "file": "animations/waving.gif",
+      "sha256": "b158d77fc814d1e3008f5d9429b896660861f8ca9489ef46fdf15f9791e3e2aa"
+    },
+    "jumping": {
+      "file": "animations/jumping.gif",
+      "sha256": "bad5021a559573732a0d1696d5711bc3e1a60f2e33a97dcf2042d21e3ad8adbc"
+    },
+    "failed": {
+      "file": "animations/failed.gif",
+      "sha256": "1f268ac711352b076487f5e28f81d0afcec7d697d220ae348d9148ff99d6a3a3"
+    },
+    "waiting": {
+      "file": "animations/waiting.gif",
+      "sha256": "12d2dbd874849dd33459cc4af489cb5157c9931547ed7aaaf1791730dea68cf5"
+    },
+    "running": {
+      "file": "animations/running.gif",
+      "sha256": "1f268ac711352b076487f5e28f81d0afcec7d697d220ae348d9148ff99d6a3a3"
+    },
+    "review": {
+      "file": "animations/review.gif",
+      "sha256": "298f286ab136028191ec69653bfdefafc22ec641ce83d5d3be740f9ead35d7a3"
+    }
+  }
+}

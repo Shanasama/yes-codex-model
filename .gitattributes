@@ -1,0 +1,10 @@
+*.gif binary
+*.webp binary
+*.png binary
+*.pickle binary
+*.codexskin binary
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.mjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf

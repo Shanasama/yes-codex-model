@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Codex 皮肤工坊</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div>
+          <strong>Codex 皮肤工坊</strong>
+          <span>Skin Engine</span>
+        </div>
+      </div>
+
+      <div class="library-heading">
+        <h2>皮肤</h2>
+        <button id="import-button" class="text-button" type="button">导入</button>
+        <input id="skin-import" type="file" accept=".codexskin,application/zip" hidden>
+      </div>
+      <label class="search" aria-label="搜索皮肤">
+        <input id="skin-search" type="search" placeholder="搜索">
+      </label>
+      <nav id="skin-list" class="skin-list" aria-label="皮肤库"></nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>本机皮肤库</span>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1 id="skin-title">正在载入</h1>
+          <p>编辑动作并应用到 Codex</p>
+        </div>
+        <div class="top-actions">
+          <button id="duplicate-button" class="button quiet" type="button">复制</button>
+          <button id="export-button" class="button quiet" type="button">导出</button>
+          <button id="apply-button" class="button primary" type="button">应用</button>
+        </div>
+      </header>
+
+      <section class="preview-band">
+        <div class="preview-copy">
+          <div class="preview-heading">
+            <span id="preview-kicker" class="state-kicker">待机</span>
+            <div>
+              <h2 id="preview-title">原始 GIF 预览</h2>
+              <p id="preview-meta">读取动画信息中</p>
+            </div>
+          </div>
+          <button id="replace-button" class="button secondary" type="button">替换 GIF</button>
+          <input id="gif-input" type="file" accept="image/gif,.gif" hidden>
+        </div>
+        <label id="drop-zone" class="preview-stage" for="gif-input" role="button" tabindex="0">
+          <span class="preview-grid" aria-hidden="true"></span>
+          <img id="main-preview" alt="当前状态动画预览">
+          <span class="drop-message">拖放 GIF，或点击画布替换</span>
+        </label>
+      </section>
+
+      <section class="state-section">
+        <div class="section-heading">
+          <div>
+            <h2>动作</h2>
+            <p>选择动作预览，或直接替换 GIF</p>
+          </div>
+          <span id="state-health" class="health-badge">0 / 9 可用</span>
+        </div>
+        <div id="state-grid" class="state-grid"></div>
+      </section>
+    </main>
+
+    <aside class="inspector">
+      <section class="inspector-section">
+        <div class="section-heading compact">
+          <h2>皮肤信息</h2>
+          <span id="builtin-badge" class="small-badge">自带皮肤</span>
+        </div>
+        <label class="field">
+          <span>名称</span>
+          <input id="meta-name" type="text" maxlength="80">
+        </label>
+        <label class="field">
+          <span>作者</span>
+          <input id="meta-author" type="text" maxlength="80">
+        </label>
+        <label class="field">
+          <span>说明</span>
+          <textarea id="meta-description" rows="3" maxlength="500"></textarea>
+        </label>
+        <button id="save-meta" class="button secondary full" type="button">保存信息</button>
+      </section>
+
+      <section id="animation-mode-section" class="inspector-section runtime-section attention">
+        <div class="section-heading compact">
+          <h2>完整动画</h2>
+          <span id="runtime-indicator" class="runtime-indicator">检查中</span>
+        </div>
+        <div class="runtime-readout">
+          <strong id="runtime-title">正在检查动画设置</strong>
+          <span id="runtime-detail">确认工作和待机动画能否完整循环</span>
+        </div>
+        <button id="runtime-patch" class="button primary full runtime-primary" type="button" hidden>一键开启完整动画</button>
+        <details id="runtime-advanced" class="advanced-settings">
+          <summary>高级设置</summary>
+          <p class="advanced-note">通常不需要修改。只有自动检查失败时，才需要填写程序文件位置。</p>
+          <label class="check-row performance-toggle"><input id="low-performance" type="checkbox"> 低性能模式（缩略图只显示首帧）</label>
+          <label class="field">
+            <span>程序文件位置</span>
+            <input id="runtime-path" type="text" spellcheck="false" placeholder="一般留空，由软件自动查找">
+          </label>
+          <p id="runtime-technical-detail" class="technical-detail">正在自动查找程序文件</p>
+          <div class="runtime-actions">
+            <button id="runtime-save" class="button secondary" type="button">重新检查</button>
+            <button id="runtime-restore" class="button secondary" type="button">恢复兼容模式</button>
+          </div>
+        </details>
+      </section>
+
+      <!-- 工作强度联动暂时注释，待兼容 Usage 接口后恢复。 -->
+      <details class="inspector-section usage-section" hidden>
+        <summary class="disclosure-summary">
+          <span>
+            <strong>工作强度联动</strong>
+            <small>按 API 用量调整工作动画</small>
+          </span>
+          <span id="usage-indicator" class="usage-indicator">未开启</span>
+          <svg class="disclosure-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </summary>
+        <div class="disclosure-body">
+          <p class="usage-intro">每 30 秒读取一次用量，自动调整动画速度和颜色。</p>
+
+          <label class="toggle-row">
+            <span>
+              <strong>启用联动</strong>
+              <small>关闭时不查询用量</small>
+            </span>
+            <input id="usage-enabled" class="toggle-input" type="checkbox" role="switch">
+          </label>
+
+          <label class="field">
+            <span>API 地址</span>
+            <select id="usage-api-preset" aria-label="API 服务预设">
+              <option value="https://api.deepseek.com">DeepSeek（推荐）</option>
+              <option value="https://api.openai.com">OpenAI</option>
+              <option value="custom">自定义地址</option>
+            </select>
+            <input id="usage-api-base" type="url" autocomplete="url" spellcheck="false" value="https://api.deepseek.com" placeholder="https://api.deepseek.com">
+            <small class="field-help">支持第三方域名或完整 Usage 接口。</small>
+          </label>
+
+          <label class="field">
+            <span>API Key</span>
+            <span class="secret-field">
+              <input id="usage-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-...">
+              <button id="usage-clear-key" class="icon-button secret-clear" type="button" title="删除已保存的 Key" aria-label="删除已保存的 Key" hidden>×</button>
+            </span>
+            <small id="usage-key-hint" class="field-help">用于读取用量。</small>
+          </label>
+
+          <div class="usage-toggles">
+            <label class="check-row"><input id="usage-speed" type="checkbox" checked> 加快动画</label>
+            <label class="check-row"><input id="usage-tint" type="checkbox" checked> 增加红色</label>
+          </div>
+
+          <label class="field">
+            <span>变化强度</span>
+            <select id="usage-sensitivity">
+              <option value="gentle">柔和</option>
+              <option value="balanced" selected>标准</option>
+              <option value="vivid">明显</option>
+            </select>
+          </label>
+
+          <button id="usage-save" class="button primary full" type="button">保存并连接</button>
+
+          <div id="usage-live" class="usage-live" hidden>
+            <strong id="usage-title">等待统计</strong>
+            <span id="usage-detail">保存设置后会自动连接</span>
+            <div class="usage-metrics">
+              <div><span>新增</span><b id="usage-tokens">0 tokens</b></div>
+              <div><span>速度</span><b id="usage-speed-value">1.00×</b></div>
+              <div><span>红色</span><b id="usage-red-value">0%</b></div>
+            </div>
+          </div>
+
+          <details class="advanced-settings usage-help">
+            <summary>说明</summary>
+            <p class="advanced-note">默认使用 DeepSeek 兼容地址；服务需要提供兼容的 Usage 接口。</p>
+            <p class="advanced-note">Key 以明文保存在本机设置文件中，仅适合个人测试环境。</p>
+          </details>
+        </div>
+      </details>
+    </aside>
+  </div>
+
+  <div id="busy" class="busy" hidden><span></span><strong>正在处理</strong></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

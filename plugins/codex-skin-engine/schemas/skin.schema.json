@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/codex-skin-engine/skin.schema.json",
+  "title": "Codex Skin Package",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schemaVersion", "id", "name", "fallback", "states"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "description": { "type": "string", "maxLength": 500 },
+    "version": { "type": "string" },
+    "author": {
+      "type": "object",
+      "properties": { "name": { "type": "string", "maxLength": 80 } },
+      "required": ["name"]
+    },
+    "license": { "type": "string" },
+    "thumbnail": { "type": "string" },
+    "fallback": { "type": "string" },
+    "states": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idle", "running-right", "running-left", "waving", "jumping", "failed", "waiting", "running", "review"],
+      "properties": {
+        "idle": { "$ref": "#/$defs/state" },
+        "running-right": { "$ref": "#/$defs/state" },
+        "running-left": { "$ref": "#/$defs/state" },
+        "waving": { "$ref": "#/$defs/state" },
+        "jumping": { "$ref": "#/$defs/state" },
+        "failed": { "$ref": "#/$defs/state" },
+        "waiting": { "$ref": "#/$defs/state" },
+        "running": { "$ref": "#/$defs/state" },
+        "review": { "$ref": "#/$defs/state" }
+      }
+    }
+  },
+  "$defs": {
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^[^\\\\:]+\\.gif$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

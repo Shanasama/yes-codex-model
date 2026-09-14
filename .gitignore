@@ -1,0 +1,30 @@
+# Local Codex state and generated user data
+.codex/
+**/.codex/
+qa/test-home/
+qa/usage-test-home/
+qa/test-export.codexskin
+qa/test-blocked.codexskin
+*.codexskin
+
+# Machine-specific runtime inspection and visual outputs
+qa/runtime-backup-*/
+qa/runtime-*-result.json
+qa/*-report.json
+qa/ui-*.png
+
+# Node and editor noise
+node_modules/
+dist/
+.dotnet-sdk/
+native/**/bin/
+native/**/obj/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local environment files
+.env
+.env.*
+!.env.example

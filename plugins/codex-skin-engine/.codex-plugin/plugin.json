@@ -1,0 +1,35 @@
+{
+  "name": "codex-skin-engine",
+  "version": "1.0.0+codex.20260914023401",
+  "description": "A lightweight local skin library and original-GIF animation manager for Codex pets.",
+  "author": {
+    "name": "Codex Skin Engine Contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "pet",
+    "skin",
+    "gif",
+    "winefox"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Codex Skin Engine",
+    "shortDescription": "\u7ba1\u7406\u3001\u7f16\u8f91\u548c\u5206\u4eab Codex \u5ba0\u7269\u76ae\u80a4",
+    "longDescription": "\u8f7b\u91cf\u76ae\u80a4\u5e93\uff0c\u652f\u6301\u4e5d\u79cd\u72b6\u6001\u9010\u9879\u66f4\u6362\u539f\u59cb GIF\u3001\u5bfc\u5165\u5bfc\u51fa .codexskin\u3001\u4e00\u952e\u5e94\u7528\u3001\u8fd0\u884c\u65f6\u6865\u63a5\u4e0e\u53ef\u9006\u56de\u6eda\u3002",
+    "developerName": "Codex Skin Engine Contributors",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "\u6253\u5f00 Codex \u76ae\u80a4\u5f15\u64ce",
+      "\u5217\u51fa\u6211\u7684\u5ba0\u7269\u76ae\u80a4",
+      "\u68c0\u67e5 GIF \u8fd0\u884c\u65f6\u6865\u63a5\u72b6\u6001"
+    ],
+    "brandColor": "#1F7A5C"
+  }
+}
