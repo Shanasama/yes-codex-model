@@ -12,7 +12,8 @@
 - Windows 10 / 11
 - 已安装 Codex 桌面版（完整 GIF 运行时需要 Microsoft Store 版）
 - Node.js 20 或更新；脚本也会自动查找 Codex 自带的 Node
-- 编译皮肤工坊窗口程序需要 .NET 7 SDK（没有的话安装脚本只会跳过这一步并给出提示）
+- 编译皮肤工坊窗口程序需要 .NET 7 SDK（只有 .NET 运行时不够；缺 SDK 时安装脚本会给出
+  中文提示并以「部分完成」结束，插件和皮肤不受影响）
 
 ### 安装步骤
 
@@ -54,20 +55,26 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_cl
 - 已经装好了什么
 - 启动器的绝对路径：`<仓库目录>\备用启动脚本\启动可写 GIF 运行时.cmd`
 - 启动前要完全退出 Codex，然后双击这个启动器
+- **最后一步（必须说）**：重启 Codex 后，去 Codex 设置 → 宠物 → 自定义宠物 里选中刚
+  应用的皮肤，宠物才会变；不选的话看起来跟没装一样
 - 皮肤工坊窗口程序的路径：`<仓库目录>\dist\studio\SkinStudio.exe`，双击就能改皮肤
 
 只安装插件时，告诉用户双击根目录的 `启动皮肤工坊.cmd`，并新建一个 Codex
 任务让插件生效。
 
 安装脚本最后会顺手编译一次皮肤工坊窗口程序，编好的 `dist\studio\` 里带着 exe、
-Node 运行时和引擎脚本，整个文件夹可以拷到别的电脑直接双击运行。如果编译失败，
-不要宣称装好了，把真实报错交给用户，并让他双击 `启动皮肤工坊.cmd` 重试。
+Node 运行时和引擎脚本，整个文件夹可以拷到别的电脑直接双击运行。如果编译失败，脚本会
+打印「部分完成」并以退出码 2 结束：这时不要说“全套装好了”，要说明插件/皮肤/运行时已经
+可用、只有工坊没编译，把真实报错交给用户，让他按提示补 .NET 7 SDK 后双击
+`启动皮肤工坊.cmd` 重试（不用重装插件）。
 
 ### 注意事项
 
 - 不要在 AI 会话里运行根目录的 `一键启动.cmd`，它会关闭 Store 版
   Codex，也就是你自己所在的程序。
 - 不要声称已经启动成功，启动必须由用户手动完成。
+- 不要只说“重启 Codex 就生效”：应用皮肤后用户还必须在 Codex 设置 → 宠物 → 自定义宠物
+  里选中它。
 - 失败时把真实报错原文交给用户，不要编造成功结果。
 - 找不到 Store 版 Codex 时用 `-PluginOnly`，并说明完整 GIF 播放需要 Store 版。
 - 酒狐素材由哔哩哔哩 UP 主“酒石酸君”创作，原用于 Minecraft 的 Yes Steve
@@ -85,8 +92,9 @@ Codex for the user.
 - Codex Desktop installed. The Microsoft Store build is required for full GIF
   playback.
 - Node.js 20 or newer. The installer also finds the Node bundled with Codex.
-- Building the Skin Studio window app needs the .NET 7 SDK. Without it the
-  installer only skips that step and says so.
+- Building the Skin Studio window app needs the .NET 7 SDK; the .NET runtime
+  alone is not enough. Without the SDK the installer reports "partial install"
+  and explains what to do; the plugin and the skin are unaffected.
 
 ### Steps
 
@@ -130,6 +138,8 @@ Check that the output contains no errors, then tell the user:
 - what was installed
 - the absolute path of the launcher: `<repository folder>\备用启动脚本\启动可写 GIF 运行时.cmd`
 - they must fully quit Codex before double-clicking that launcher
+- **the last step, always mention it**: after restarting Codex, pick the skin in
+  Codex settings → Pets → Custom pets, otherwise the pet looks unchanged
 - the Skin Studio app path: `<repository folder>\dist\studio\SkinStudio.exe`,
   which is a standalone window for editing skins
 
@@ -139,14 +149,18 @@ repository root, and to open a new Codex task so the plugin loads.
 The installer also builds the Skin Studio window app once at the end. The resulting
 `dist\studio\` folder contains the exe, a Node runtime, and the engine scripts, so it
 can be copied to another machine and started by double-clicking. If that build fails,
-do not claim success: report the real error and tell the user to double-click
-`启动皮肤工坊.cmd` to retry.
+the installer prints "partial install" and exits with code 2. Do not claim a full
+success: say that the plugin, skin and runtime are usable but the studio was not built,
+report the real error, and tell the user to install the .NET 7 SDK and double-click
+`启动皮肤工坊.cmd` to retry (no plugin reinstall needed).
 
 ### Rules
 
 - Never run the root `一键启动.cmd` inside an AI session. It closes the
   Store build of Codex, which is the program you are running in.
 - Never claim that Codex was started. Starting it is the user's job.
+- Never say that restarting Codex is enough: after applying a skin the user must also
+  pick it in Codex settings → Pets → Custom pets.
 - On failure, give the user the real error text. Do not invent a success result.
 - When no Microsoft Store build of Codex is found, use `-PluginOnly` and say that
   full GIF playback needs the Store build.

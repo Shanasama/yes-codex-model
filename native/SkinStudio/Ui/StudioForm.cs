@@ -113,6 +113,7 @@ internal sealed class StudioForm : Form
     private readonly StudioLabel _applyLabel = new();
     private readonly StudioLabel _applyReceipt = new() { WrapText = true };
     private readonly StudioLabel _applyBackup = new() { WrapText = true };
+    private readonly StudioLabel _applyHint = new() { WrapText = true };
     private readonly StudioButton _openPets = new();
 
     public StudioForm(StudioOptions options)
@@ -122,6 +123,9 @@ internal sealed class StudioForm : Form
 
         Text = "Codex 皮肤工坊";
         FormBorderStyle = FormBorderStyle.None;
+        // 布局全部由 LayoutAll 按像素常量算，禁止 WinForms 再按 DPI / 字体自动缩放一遍，
+        // 否则高 DPI 显示器上字体被放大、容器不会，文字就溢出控件。
+        AutoScaleMode = AutoScaleMode.None;
         try { Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { /* 使用默认图标 */ }
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Theme.Canvas;
@@ -405,6 +409,11 @@ internal sealed class StudioForm : Form
         _applyBackup.ForeColor = Theme.Faint;
         _applyBackup.BackColor = Theme.Sidebar;
 
+        _applyHint.Font = Theme.Small;
+        _applyHint.ForeColor = Theme.AccentInk;
+        _applyHint.BackColor = Theme.Sidebar;
+        _applyHint.Text = "应用完还要完全退出并重启 Codex，再到 Codex 设置 → 宠物 → 自定义宠物 里选中它，皮肤才会显示。";
+
         _openPets.Text = "打开宠物目录";
         _openPets.Icon = Glyph.Folder;
         _openPets.Variant = ButtonVariant.Quiet;
@@ -417,7 +426,7 @@ internal sealed class StudioForm : Form
             _infoLabel, _builtInChip, _nameField, _authorField, _descField, _saveMeta, _divider1,
             _runtimeLabel, _runtimeChip, _runtimeHeadline, _runtimeDetail, _runtimeAction, _advancedToggle,
             _lowPowerLabel, _lowPower, _runtimePath, _runtimeRecheck, _runtimeRestore, _runtimeTechnical,
-            _divider2, _applyLabel, _applyReceipt, _applyBackup, _openPets
+            _divider2, _applyLabel, _applyReceipt, _applyBackup, _applyHint, _openPets
         });
 
        _inspector.Controls.Add(_inspectorHost);
@@ -700,6 +709,8 @@ internal sealed class StudioForm : Form
         y += 38;
         _applyBackup.SetBounds(pad, y, inner, 32);
         y += 34;
+        _applyHint.SetBounds(pad, y, inner, 46);
+        y += 48;
         _openPets.SetBounds(pad, y, 136, 28);
         y += 28 + pad;
 
@@ -1121,7 +1132,7 @@ internal sealed class StudioForm : Form
         var skin = _selected;
         if (skin is null || _busy) return;
         if (!StudioDialog.Confirm(this, "应用到 Codex",
-                $"将把「{skin.DisplayName}」的九种动作写入 Codex 宠物目录，现有版本会自动备份。应用后需要重启 Codex 才能看到效果。",
+                $"将把「{skin.DisplayName}」的九种动作写入 Codex 宠物目录，现有版本会自动备份。应用后请完全退出并重启 Codex，再打开 Codex 设置 → 宠物 → 自定义宠物 选中它，皮肤才会显示。",
                 "应用")) return;
 
         await RunBusyAsync("正在应用到 Codex…", async () =>
@@ -1130,7 +1141,7 @@ internal sealed class StudioForm : Form
             _model = _model with { LastApply = receipt };
             RenderSkinList();
             RenderReceipt();
-            ShowToast($"已应用「{receipt.Name}」，重启 Codex 后生效");
+            ShowToast($"已应用「{receipt.Name}」。重启 Codex 后，到 设置 → 宠物 → 自定义宠物 选中它");
         });
     }
 

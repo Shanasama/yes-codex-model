@@ -10,7 +10,8 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.SetDefaultFont(new Font(Theme.Family, 9f));
+        // 像素单位：和 Theme 里的字体一致，布局是像素常量，字体也必须是像素尺寸。
+        Application.SetDefaultFont(new Font(Theme.Family, 12f, FontStyle.Regular, GraphicsUnit.Pixel));
 
         if (args.Contains("--selftest")) return SelfTest.Run();
 

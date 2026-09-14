@@ -25,6 +25,9 @@ if /I "%CODEX_SKIN_PLAN%"=="1" (
   echo One-click GIF plan completed without changes.
 ) else if "%EXIT_CODE%"=="0" (
   echo One-click GIF installation completed.
+) else if "%EXIT_CODE%"=="2" (
+  echo Plugin, skin and GIF runtime are ready, but the skin studio was not built.
+  echo Fix the error above, then double-click 启动皮肤工坊.cmd to retry.
 ) else (
   echo One-click GIF installation failed. Exit code: %EXIT_CODE%
 )

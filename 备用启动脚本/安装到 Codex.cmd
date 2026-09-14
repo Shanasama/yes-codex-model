@@ -18,6 +18,12 @@ set "PLAN_ARG="
 if /I "%CODEX_SKIN_PLAN%"=="1" set "PLAN_ARG=-Plan"
 "%POWERSHELL%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" -ProjectRoot "%PROJECT_ROOT%" -PluginOnly -NoLaunch %PLAN_ARG%
 set "EXIT_CODE=%ERRORLEVEL%"
+if "%EXIT_CODE%"=="2" (
+  echo 插件和酒狐皮肤已经装好，只有皮肤工坊没编译成功。
+  echo 按上面的提示修好 .NET 7 SDK 后，双击根目录的 启动皮肤工坊.cmd 重试。
+  pause
+  exit /b 2
+)
 if not "%EXIT_CODE%"=="0" (
   echo.
   echo 插件安装失败，退出码：%EXIT_CODE%
@@ -28,7 +34,7 @@ if /I "%CODEX_SKIN_PLAN%"=="1" (
   pause
   exit /b 0
 )
-call "%~dp0启动皮肤工坊.cmd"
+call "%PROJECT_ROOT%\启动皮肤工坊.cmd"
 set "STUDIO_EXIT_CODE=%ERRORLEVEL%"
 pause
 exit /b %STUDIO_EXIT_CODE%

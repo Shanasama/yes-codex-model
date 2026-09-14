@@ -12,6 +12,7 @@ internal sealed class StudioDialog : Form
     {
         _prompt = initialValue is not null;
         FormBorderStyle = FormBorderStyle.None;
+        AutoScaleMode = AutoScaleMode.None;
         StartPosition = FormStartPosition.CenterParent;
         ShowInTaskbar = false;
         BackColor = Theme.Canvas;

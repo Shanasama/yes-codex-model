@@ -13,8 +13,9 @@ For direct requests:
 - Use `import_skin` and `export_skin` for shareable `.codexskin` packages.
 - Use `replace_state_gif` only for the requested state. The engine copies the source GIF byte-for-byte, checks its structure, records its frame count, and updates SHA-256.
 - Use `apply_skin` when the user asks to install a chosen skin. Report the install path and any backup path from the result.
+- After `apply_skin`, always tell the user the last step: fully quit and restart Codex, then pick the skin in Codex settings → Pets → Custom pets. Applying only writes the GIFs into the pet folder; it does not switch the active pet by itself.
 - Use `runtime_bridge` with `status` for diagnostics.
 
 The direct-GIF bridge modifies a writable Codex `app.asar` overlay. Never call `runtime_bridge` with `install` or `restore` unless the user explicitly requests that mutation. The engine refuses unknown bundle versions and backs up the original header before installation. A full Codex restart is required after either operation.
 
-Do not claim live animation continuity, activation, or GPU improvement from static validation alone. Those require the user to restart Codex, select the pet, and observe the runtime.
+Do not claim live animation continuity, activation, or GPU improvement from static validation alone. Those require the user to restart Codex, select the pet in Codex settings → Pets → Custom pets, and observe the runtime.

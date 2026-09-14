@@ -25,14 +25,18 @@
 ```
 
 AI 会自己克隆仓库、检查环境、装好插件和完整 GIF 运行时，然后把启动脚本路径告诉你。
-你只要完全退出 Codex，再双击它给的那个启动器。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
+你只要完全退出 Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自定义宠物 里选中
+这套皮肤。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
 
 ### 2. 或者自己双击装
 
 1. 把 ZIP 完整解压到任意目录，别在压缩包里直接双击。
 2. 双击根目录的 `一键启动.cmd`。它会依次装好 Codex 插件、准备一份可写的 Codex 副本
    （第一次要复制约 1.8 GB，会慢几分钟）、应用酒狐皮肤，最后把 Codex 启动起来。
-3. 想改皮肤就双击 `启动皮肤工坊.cmd`，第一次会先编译，要等几分钟。
+3. 装完还不是最终效果：完全退出 Codex，用启动器重新打开，再到 Codex 设置 → 宠物 →
+   自定义宠物 里选中「酒狐（WineFox）」，宠物才会真的换动画。
+4. 想改皮肤就双击 `启动皮肤工坊.cmd`，第一次会先编译，要等几分钟（这一步需要 .NET 7
+   SDK，缺的话脚本会直接告诉你怎么补）。
 
 只想做其中一步的话，`备用启动脚本\` 里有三个拆开的入口：
 
@@ -61,10 +65,18 @@ $env:CODEX_SKIN_PLAN = "1"
 放在 `dist\studio\`：exe、随身的 Node 运行时、引擎脚本都在里面，整个文件夹拷到别的
 Windows 电脑上可以直接双击运行。
 
+编译需要 .NET 7 SDK，只有 .NET 运行时是不够的。缺 SDK 时脚本不会假装成功，而是直接
+告诉你装哪个版本，或者让你把 SDK 的 ZIP 解压到仓库的 `.dotnet-sdk\`（里面要有
+`dotnet.exe`），然后双击 `启动皮肤工坊.cmd` 重试就行，不用重装插件。
+
 工坊能做的事：皮肤库与搜索、动画实时预览（播放 / 暂停、适应 / 原始尺寸）、九张状态卡片
 逐个替换 GIF（GIF 也可以直接拖到预览区）、编辑皮肤信息、复制 / 导出 / 导入 `.codexskin`、
 一键应用到 Codex，以及完整动画运行时的一键开启与恢复。导入会拦掉脚本、可执行文件、
 危险路径和异常大的压缩包。
+
+应用只是把九张 GIF 写进 Codex 的宠物目录，**不等于换好了**：要完全退出并重启 Codex，
+再到 Codex 设置 → 宠物 → 自定义宠物 里选中它，皮肤才会显示。工坊的应用确认框、
+成功提示和右侧检查器都会提醒这一步。
 
 ## 会复制一份 Codex（以及为什么）
 
@@ -94,7 +106,8 @@ Windows 只给读权限：往里写会被系统直接拒绝，而且它受 Store
 ## 环境要求
 
 Windows 10/11、Codex 桌面版（要完整 GIF 播放就用 Microsoft Store 版）、Node.js 20 或更新
-（也会自动找 Codex 自带的 Node）。第一次编译皮肤工坊还需要 .NET 7 SDK。
+（也会自动找 Codex 自带的 Node）。第一次编译皮肤工坊还需要 .NET 7 SDK；没有的话插件、
+皮肤和 GIF 运行时照样装好，安装脚本会明确报「部分完成」并告诉你补哪一步。
 
 ## 目录结构
 
@@ -150,7 +163,8 @@ I will start it myself.
 
 The agent clones the repo, checks the environment, installs the plugin plus the full GIF
 runtime, and reports the launcher path back to you. You then only have to fully quit Codex
-and double-click that launcher. The machine-readable steps live in [AGENTS.md](AGENTS.md).
+and double-click that launcher, and finally pick the skin in Codex settings → Pets →
+Custom pets. The machine-readable steps live in [AGENTS.md](AGENTS.md).
 
 ### 2. Or install it by double-clicking
 
@@ -158,8 +172,10 @@ and double-click that launcher. The machine-readable steps live in [AGENTS.md](A
 2. Double-click `一键启动.cmd` in the repository root. It installs the Codex plugin,
    prepares a writable copy of Codex (the first run copies about 1.8 GB, so give it a few
    minutes), applies the WineFox skin and finally starts Codex.
-3. To edit skins, double-click `启动皮肤工坊.cmd`; the first run compiles it, which takes
-   a few minutes.
+3. That is not the end of it: fully quit Codex, start it again with the launcher, then pick
+   the skin in Codex settings → Pets → Custom pets. Only then does the pet change.
+4. To edit skins, double-click `启动皮肤工坊.cmd`; the first run compiles it, which takes
+   a few minutes and needs the .NET 7 SDK.
 
 If you only need part of the flow, the `备用启动脚本\` ("backup launchers") folder has
 three split entries:
@@ -190,11 +206,20 @@ pack). The result in `dist\studio\` already contains the exe, a bundled Node run
 the engine scripts, so the whole folder can be copied to another Windows machine and run
 by double-clicking.
 
+Building needs the .NET 7 SDK; the .NET runtime alone is not enough. If the SDK is missing
+the script does not pretend to succeed: it tells you which SDK to install, or to unzip the
+SDK ZIP into the repository's `.dotnet-sdk\` folder (it must contain `dotnet.exe`), and then
+to double-click `启动皮肤工坊.cmd` again. No plugin reinstall is needed.
+
 The studio does: skin library and search, live animation preview (play/pause, fit/original
 size), nine state cards with per-state GIF replacement (you can also drop a GIF onto the
 preview), skin metadata editing, duplicate/export/import of `.codexskin`, one-click apply
 to Codex, and install/restore of the full animation runtime. Imports reject scripts,
 executables, dangerous paths and oversized archives.
+
+Applying only writes the nine GIFs into the Codex pet folder; it is **not** the last step.
+Fully quit and restart Codex, then pick the skin in Codex settings → Pets → Custom pets.
+The studio's confirm dialog, success toast and inspector all say so.
 
 ## It copies Codex (and why)
 

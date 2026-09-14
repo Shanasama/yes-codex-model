@@ -200,24 +200,51 @@ function Ensure-StoreStopped {
 }
 
 function Ensure-Studio {
+    # 返回状态对象，让调用方知道“工坊到底装上没有”，不再把失败悄悄降级成警告。
     param([Parameter(Mandatory = $true)][string]$ProjectRoot)
     $studioExe = Join-Path $ProjectRoot "dist\studio\SkinStudio.exe"
     if (Test-Path -LiteralPath $studioExe -PathType Leaf) {
         Write-Step "皮肤工坊已经编译过了。"
-        return $studioExe
+        return [pscustomobject]@{ Status = "Ready"; Path = $studioExe }
     }
     $builder = Join-Path $ProjectRoot "build_studio.ps1"
     if (-not (Test-Path -LiteralPath $builder -PathType Leaf)) {
-        Write-Warning "找不到构建脚本：$builder，跳过皮肤工坊编译。"
-        return $null
+        Write-Warning "找不到构建脚本：$builder"
+        return [pscustomobject]@{ Status = "Missing"; Path = $null }
     }
-    Write-Step "编译皮肤工坊（独立窗口程序，首次需要几分钟，会下载 .NET 运行时包）。"
+    Write-Step "编译皮肤工坊（独立窗口程序，首次需要几分钟，会下载 .NET 运行时包；需要 .NET 7 SDK）。"
     & $powershellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $builder
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $studioExe -PathType Leaf)) {
-        Write-Warning "皮肤工坊编译没成功，稍后可以双击 启动皮肤工坊.cmd 重试。"
-        return $null
+    $studioCode = $LASTEXITCODE
+    if ($studioCode -ne 0 -or -not (Test-Path -LiteralPath $studioExe -PathType Leaf)) {
+        Write-Warning "皮肤工坊没有编译成功（退出码 $studioCode）。"
+        return [pscustomobject]@{ Status = "Failed"; Path = $null }
     }
-    return $studioExe
+    return [pscustomobject]@{ Status = "Ready"; Path = $studioExe }
+}
+
+function Write-StudioBlocked {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$Status
+    )
+    if ($Status -ne "Failed") {
+        Write-Host "没找到仓库里的 build_studio.ps1，可能是压缩包没解压完整；重新解压整个仓库后双击 启动皮肤工坊.cmd。" -ForegroundColor Yellow
+        return
+    }
+    Write-Host "皮肤工坊这次没装上。最常见的原因是机器上只有 .NET 运行时、没有 .NET 7 SDK。" -ForegroundColor Yellow
+    Write-Host "  1. 安装 .NET 7 SDK（或更高版本）：https://dotnet.microsoft.com/download/dotnet/7.0" -ForegroundColor Yellow
+    Write-Host "  2. 或者下载 .NET 7 SDK 的 ZIP，解压到 $(Join-Path $ProjectRoot '.dotnet-sdk')（里面要有 dotnet.exe）" -ForegroundColor Yellow
+    Write-Host "  修好之后双击 $(Join-Path $ProjectRoot '启动皮肤工坊.cmd') 重试编译就行，不用重装插件。" -ForegroundColor Yellow
+}
+
+function Write-PetSelectionHint {
+    param([switch]$GifRuntime)
+    Write-Host "别漏最后一步：打开 Codex 设置里的「宠物」，切到「自定义宠物」，选中刚应用的那套皮肤。" -ForegroundColor Cyan
+    if ($GifRuntime) {
+        Write-Host "  顺序：完全退出 Codex → 双击上面的启动器打开 GIF 版 Codex → 再去设置里选宠物。" -ForegroundColor Cyan
+    } else {
+        Write-Host "  不做这一步的话，宠物看起来不会有任何变化。" -ForegroundColor Cyan
+    }
 }
 
 if (-not (Test-Path -LiteralPath $cliPath -PathType Leaf)) {
@@ -251,12 +278,22 @@ if ($PluginOnly) {
         exit 0
     }
     Install-PluginAndSkin -CodexExecutable $codexExe -NodeExecutable $nodeExe
-    $studioExe = if ($SkipStudio) { $null } else { Ensure-Studio -ProjectRoot $projectRoot }
-    Write-Host "完成：插件和 WineFox 皮肤已安装。" -ForegroundColor Green
-    Write-Host "皮肤工坊启动器：$(Join-Path $projectRoot '启动皮肤工坊.cmd')"
-    if ($studioExe) { Write-Host "皮肤工坊程序：$studioExe（双击就能改皮肤）" }
+    $studio = if ($SkipStudio) { [pscustomobject]@{ Status = "Skipped"; Path = $null } } else { Ensure-Studio -ProjectRoot $projectRoot }
+    if ($studio.Status -eq "Ready") {
+        Write-Host "完成：插件和 WineFox 皮肤已安装。" -ForegroundColor Green
+        Write-Host "皮肤工坊启动器：$(Join-Path $projectRoot '启动皮肤工坊.cmd')"
+        Write-Host "皮肤工坊程序：$($studio.Path)（双击就能改皮肤）"
+    } elseif ($studio.Status -eq "Skipped") {
+        Write-Host "完成：插件和 WineFox 皮肤已安装（参数要求跳过皮肤工坊编译）。" -ForegroundColor Green
+        Write-Host "想改皮肤时双击：$(Join-Path $projectRoot '启动皮肤工坊.cmd')"
+    } else {
+        Write-Host "部分完成：插件和 WineFox 皮肤已经装好，但皮肤工坊没有装上。" -ForegroundColor Yellow
+        Write-StudioBlocked -ProjectRoot $projectRoot -Status $studio.Status
+    }
     Write-Host "请新建一个 Codex 任务以载入插件。" -ForegroundColor Green
-    exit 0
+    Write-PetSelectionHint
+    if ($studio.Status -eq "Ready" -or $studio.Status -eq "Skipped") { exit 0 }
+    exit 2
 }
 
 $versionKey = $package.Version -replace "[^0-9A-Za-z._-]", "_"
@@ -297,12 +334,24 @@ $codexExe = Resolve-Codex -Requested $shadowCodex -Fallback $CodexPath
 Install-PluginAndSkin -CodexExecutable $codexExe -NodeExecutable $nodeExe
 
 if ($NoLaunch) {
-    $studioExe = if ($SkipStudio) { $null } else { Ensure-Studio -ProjectRoot $projectRoot }
-    Write-Host "安装完成。" -ForegroundColor Green
-    Write-Host "启动器：$(Join-Path $projectRoot '备用启动脚本\启动可写 GIF 运行时.cmd')"
-    if ($studioExe) { Write-Host "皮肤工坊程序：$studioExe（双击就能改皮肤）" }
+    $studio = if ($SkipStudio) { [pscustomobject]@{ Status = "Skipped"; Path = $null } } else { Ensure-Studio -ProjectRoot $projectRoot }
+    $launcher = Join-Path $projectRoot "备用启动脚本\启动可写 GIF 运行时.cmd"
+    if ($studio.Status -eq "Ready") {
+        Write-Host "安装完成。" -ForegroundColor Green
+        Write-Host "启动器：$launcher"
+        Write-Host "皮肤工坊程序：$($studio.Path)（双击就能改皮肤）"
+    } elseif ($studio.Status -eq "Skipped") {
+        Write-Host "安装完成。" -ForegroundColor Green
+        Write-Host "启动器：$launcher"
+    } else {
+        Write-Host "部分完成：插件、酒狐皮肤和可写 GIF 运行时都装好了（GIF 动画已经能用），但皮肤工坊没有装上。" -ForegroundColor Yellow
+        Write-Host "启动器：$launcher" -ForegroundColor Yellow
+        Write-StudioBlocked -ProjectRoot $projectRoot -Status $studio.Status
+    }
     Write-Host "使用前请完全退出 Codex，再双击上面的启动器。" -ForegroundColor Green
-    exit 0
+    Write-PetSelectionHint -GifRuntime
+    if ($studio.Status -eq "Ready" -or $studio.Status -eq "Skipped") { exit 0 }
+    exit 2
 }
 
 $shadowExecutable = Join-Path $shadowRoot "app\ChatGPT.exe"
@@ -318,3 +367,4 @@ if ($LASTEXITCODE -ne 0) {
     throw "shadow runtime 启动失败，退出码：$LASTEXITCODE"
 }
 Write-Host "完成：WineFox GIF runtime 已启动。" -ForegroundColor Green
+Write-PetSelectionHint -GifRuntime

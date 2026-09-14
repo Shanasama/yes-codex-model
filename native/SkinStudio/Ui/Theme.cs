@@ -66,17 +66,19 @@ internal static class Theme
 
     public static readonly string Family = PickFamily();
 
-    // 字号：pt = px * 0.75
-    public static readonly Font Display = new(Family, 14.25f, FontStyle.Bold);       // 19px
-    public static readonly Font Title = new(Family, 11.25f, FontStyle.Bold);         // 15px
-    public static readonly Font Section = new(Family, 9.75f, FontStyle.Bold);        // 13px
-    public static readonly Font Body = new(Family, 9.75f);                           // 13px
-    public static readonly Font BodyStrong = new(Family, 9.75f, FontStyle.Bold);     // 13px
-    public static readonly Font Small = new(Family, 8.25f);                          // 11px
-    public static readonly Font SmallStrong = new(Family, 8.25f, FontStyle.Bold);    // 11px
-    public static readonly Font Micro = new(Family, 7.5f);                           // 10px
-    public static readonly Font MicroStrong = new(Family, 7.5f, FontStyle.Bold);     // 10px
-    public static readonly Font Mono = new("Consolas", 8.25f);                       // 11px
+    // 字号一律按像素给，不按 pt：整套布局的宽高都是像素常量，字体也必须是像素尺寸，
+    // 否则在 125% / 150% 缩放的显示器上字体被 DPI 放大、卡片和按钮不会，文字就会溢出。
+    private const GraphicsUnit FontUnit = GraphicsUnit.Pixel;
+    public static readonly Font Display = new(Family, 19f, FontStyle.Bold, FontUnit);
+    public static readonly Font Title = new(Family, 15f, FontStyle.Bold, FontUnit);
+    public static readonly Font Section = new(Family, 13f, FontStyle.Bold, FontUnit);
+    public static readonly Font Body = new(Family, 13f, FontStyle.Regular, FontUnit);
+    public static readonly Font BodyStrong = new(Family, 13f, FontStyle.Bold, FontUnit);
+    public static readonly Font Small = new(Family, 11f, FontStyle.Regular, FontUnit);
+    public static readonly Font SmallStrong = new(Family, 11f, FontStyle.Bold, FontUnit);
+    public static readonly Font Micro = new(Family, 10f, FontStyle.Regular, FontUnit);
+    public static readonly Font MicroStrong = new(Family, 10f, FontStyle.Bold, FontUnit);
+    public static readonly Font Mono = new("Consolas", 11f, FontStyle.Regular, FontUnit);
 
     private static string PickFamily()
     {
