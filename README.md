@@ -83,7 +83,7 @@ Windows 10/11、Codex 桌面版（要完整 GIF 播放就用 Microsoft Store 版
 | `plugins\codex-skin-engine\` | Codex 插件：技能、MCP 工具、引擎脚本、内置皮肤 |
 | `native\SkinStudio\` | 皮肤工坊的 C# 源码 |
 | `qa\` | 自检脚本 |
-| `归档\旧网页工坊\` | 以前的浏览器版界面，不再维护，只留作参考 |
+| `归档\` | 退役的旧网页工坊，不参与任何安装流程；为什么留着见 `归档\说明.md` |
 
 ## 开发者：自检
 
@@ -195,7 +195,7 @@ studio build additionally needs the .NET 7 SDK.
 | `plugins\codex-skin-engine\` | The Codex plugin: skill, MCP tools, engine scripts, bundled skin |
 | `native\SkinStudio\` | C# source of the studio window |
 | `qa\` | Self-check scripts |
-| `归档\旧网页工坊\` | The retired browser UI, kept for reference only |
+| `归档\` | The retired browser studio, not part of any install path; see `归档\说明.md` |
 
 ## Developers: self-checks
 
