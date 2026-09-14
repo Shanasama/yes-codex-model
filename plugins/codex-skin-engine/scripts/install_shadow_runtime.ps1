@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidateSet("Plan", "Install", "Launch", "Status", "Restore")]
     [string]$Action = "Install",
@@ -155,6 +155,69 @@ function Write-ShadowLauncher {
     Set-Content -LiteralPath $Path -Value $lines -Encoding ASCII
 }
 
+function Get-AsarHeaderSize {
+    param([Parameter(Mandatory = $true)][string]$AsarPath)
+    try {
+        $stream = [IO.File]::OpenRead($AsarPath)
+        try {
+            $prefix = [byte[]]::new(8)
+            if ($stream.Read($prefix, 0, 8) -ne 8) { return $null }
+            return [int][BitConverter]::ToUInt32($prefix, 4)
+        } finally {
+            $stream.Dispose()
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Copy-AsarHeaderBackup {
+    param(
+        [Parameter(Mandatory = $true)][string]$AsarPath,
+        [Parameter(Mandatory = $true)][string]$Destination,
+        [Parameter(Mandatory = $true)][int]$ExpectedLength
+    )
+    $headerSize = Get-AsarHeaderSize -AsarPath $AsarPath
+    if ($null -eq $headerSize -or $headerSize -ne $ExpectedLength) { return $false }
+    try {
+        $stream = [IO.File]::OpenRead($AsarPath)
+        try {
+            $buffer = [byte[]]::new($headerSize)
+            $position = 0
+            while ($position -lt $headerSize) {
+                $read = $stream.Read($buffer, $position, $headerSize - $position)
+                if ($read -le 0) { return $false }
+                $position += $read
+            }
+        } finally {
+            $stream.Dispose()
+        }
+    } catch {
+        return $false
+    }
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Destination) | Out-Null
+    [IO.File]::WriteAllBytes($Destination, $buffer)
+    return $true
+}
+
+function Reset-ShadowRuntimeCopy {
+    if ((Get-RunningAtPath $shadowExe).Count -gt 0) {
+        throw "The shadow Codex process is running; stop it before rebuilding the shadow runtime."
+    }
+    if (Test-Path -LiteralPath $ShadowRoot -PathType Container) {
+        $oldRoot = "$ShadowRoot.backup-$([DateTime]::Now.ToString('yyyyMMdd-HHmmss'))"
+        Move-Item -LiteralPath $ShadowRoot -Destination $oldRoot | Out-Null
+        Write-Host "Moved the previous shadow runtime to $oldRoot"
+    }
+    New-Item -ItemType Directory -Force -Path $ShadowRoot | Out-Null
+    Invoke-RobocopyApp -Source $package.AppRoot -Destination $shadowApp
+    if (-not (Test-Path -LiteralPath $shadowAsar -PathType Leaf)) {
+        throw "Shadow app.asar was not copied: $shadowAsar"
+    }
+    $report = Invoke-PatcherJson -Node $node -Patcher $patcherPath -Asar $shadowAsar -Arguments @("--action", "verify")
+    return $report
+}
+
 $node = Resolve-Node $NodePath
 $package = Resolve-CodexPackage
 $versionKey = $package.Version -replace "[^0-9A-Za-z._-]", "_"
@@ -268,7 +331,18 @@ if (-not (Test-Path -LiteralPath $shadowAsar -PathType Leaf)) {
     throw "Shadow app.asar was not copied: $shadowAsar"
 }
 $shadowStatus = Invoke-PatcherJson -Node $node -Patcher $patcherPath -Asar $shadowAsar -Arguments @("--action", "verify")
-if ($shadowStatus.state -eq "baseline") {
+$headerBackup = Join-Path $backupDir "header-baseline.pickle"
+if ($shadowStatus.state -eq "gif-patched-legacy" -and -not (Test-Path -LiteralPath $headerBackup -PathType Leaf)) {
+    Write-Host "The shadow runtime still carries an older GIF patch; upgrading it in place needs the original header backup."
+    $headerSize = [int]$shadowStatus.headerSize
+    if (Copy-AsarHeaderBackup -AsarPath $package.AsarPath -Destination $headerBackup -ExpectedLength $headerSize) {
+        Write-Host "Rebuilt the header backup from the Store copy: $headerBackup"
+    } else {
+        Write-Host "This shadow runtime was built from a different Codex build; rebuilding it from the Store copy."
+        $shadowStatus = Reset-ShadowRuntimeCopy
+    }
+}
+if ($shadowStatus.state -eq "baseline" -or $shadowStatus.state -eq "gif-patched-legacy") {
     New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
     Invoke-PatcherJson -Node $node -Patcher $patcherPath -Asar $shadowAsar -Arguments @("--action", "plan") | Out-Null
     Invoke-PatcherJson -Node $node -Patcher $patcherPath -Asar $shadowAsar -Arguments @("--action", "apply", "--backup-dir", $backupDir) | Out-Null

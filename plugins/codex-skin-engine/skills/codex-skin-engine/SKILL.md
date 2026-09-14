@@ -5,7 +5,7 @@ description: Manage Codex pet skins, replace any of the nine animation-state GIF
 
 # Codex Skin Engine
 
-Use the plugin's MCP tools for skin operations. Open the visual editor with `open_studio` when the user asks to browse, customize, upload, preview, or manage animations.
+Use the plugin's MCP tools for skin operations. Open the native studio window with `open_studio` when the user asks to browse, customize, upload, preview, or manage animations. It launches `dist\studio\SkinStudio.exe`; if the tool reports that the studio is not built yet, tell the user to run `build_studio.ps1` or double-click `启动皮肤工坊.cmd` once, because the first build takes a few minutes.
 
 For direct requests:
 

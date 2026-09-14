@@ -35,119 +35,37 @@ const TARGET_PROFILES = [
       supportedHashes: new Set([
         "a42da38cbb14b28399f1d54fcf453bffc5e9802663e7e098f187c8378f4c7a40",
       ]),
-      legacyPatchHashes: new Set(),
+      legacyPatchHashes: new Set([
+        "2daa8f4a8202952070f1f0f3e67b11693e2047698ceecb913ea52bf9a2e18642",
+      ]),
     },
     renderer: {
       archivePath: "webview/assets/app-initial-d9bed9d614d8.js",
       supportedHashes: new Set([
         "7c3a89e7e224f76031b45a88f72af8cd60f0c3d47aac9ca34b2c70e11dfe9867",
       ]),
-      legacyPatchHashes: new Set(),
+      legacyPatchHashes: new Set([
+        "214040bedf8e467e4dca5aaea62ba355cdb98c25c03d07bc12b8d0c001d268bd",
+      ]),
     },
   },
 ];
 
-const MAIN_LOADER = `const __CODEX_SKIN_USAGE_SYNC_V1__=(()=>{
-  let started=false,lastPayload="";
-  const fallback=()=>({enabled:false,status:"disabled",tokensLast30s:0,intensity:0,speedMultiplier:1,redPercent:0});
-  function start(){
-    if(started)return;
-    started=true;
-    const nodePath=require("node:path"),nodeOs=require("node:os"),nodeFs=require("node:fs");
-    const statePath=nodePath.join(process.env.CODEX_HOME||nodePath.join(nodeOs.homedir(),".codex"),"skin-engine","usage-state.json");
-    const publish=()=>{
-      let payload=fallback();
-      try{
-        const raw=JSON.parse(nodeFs.readFileSync(statePath,"utf8")),updatedAt=Date.parse(raw.updatedAt||"");
-        if(Number.isFinite(updatedAt)&&Date.now()-updatedAt<90000){
-          payload={
-            enabled:raw.enabled===true,
-            status:String(raw.status||"idle"),
-            tokensLast30s:Number.isFinite(raw.tokensLast30s)?Math.max(0,raw.tokensLast30s):0,
-            intensity:Number.isFinite(raw.intensity)?Math.max(0,Math.min(1,raw.intensity)):0,
-            speedMultiplier:Number.isFinite(raw.speedMultiplier)?Math.max(1,Math.min(1.5,raw.speedMultiplier)):1,
-            redPercent:Number.isFinite(raw.redPercent)?Math.max(0,Math.min(75,raw.redPercent)):0
-          };
-        }
-      }catch{}
-      const serialized=JSON.stringify(payload);
-      if(serialized===lastPayload)return;
-      lastPayload=serialized;
-      const script="window.__codexSkinUsage="+serialized+";window.dispatchEvent(new CustomEvent('codex-skin-usage',{detail:window.__codexSkinUsage}));";
-      try{
-        for(const windowRef of require("electron").BrowserWindow.getAllWindows()){
-          windowRef.webContents.executeJavaScript(script,true).catch(()=>{});
-        }
-      }catch{}
-    };
-    publish();
-    const timer=setInterval(publish,30000);
-    timer.unref?.();
-  }
-  return{start};
-})();
-async function e0(e,t,n,r,i){let a=t0(e,n,r);if(a==null)return null;let o=e.join(a,i);try{let n=JSON.parse(await X.readFile(o,t)),i=J1.safeParse(n);if(!i.success)return null;let s=t0(e,a,i.data.spritesheetPath);if(s==null)return null;let c=await X.readFileBase64(s,t),l=typeof c=="string"?c:c.toString("base64"),u=Z1(Buffer.from(l,"base64"),i.data.spriteVersionNumber),d=Object.fromEntries(await Promise.all(Object.entries(n.animationPaths??{}).map(async([n,r])=>{let i=t0(e,a,r);if(i==null)return[n,null];let o=await X.readFileBase64(i,t),s=typeof o=="string"?o:o.toString("base64"),c=Buffer.from(s,"base64");return[n,c.length>=10&&c.subarray(0,3).toString("ascii")==="GIF"?"data:image/gif;base64,"+s:null]})));__CODEX_SKIN_USAGE_SYNC_V1__.start();return u==null?null:{directoryPath:a,id:"custom:"+r,displayName:i.data.displayName??i.data.id??r,description:i.data.description,spriteVersionNumber:i.data.spriteVersionNumber,spritesheetDataUrl:u.spritesheetDataUrl,animationDataUrls:d}}catch{return null}}`;
+const MAIN_LOADER = `const __CODEX_SKIN_GIF_RUNTIME_V1__=1;
+async function e0(e,t,n,r,i){let a=t0(e,n,r);if(a==null)return null;let o=e.join(a,i);try{let n=JSON.parse(await X.readFile(o,t)),i=J1.safeParse(n);if(!i.success)return null;let s=t0(e,a,i.data.spritesheetPath);if(s==null)return null;let c=await X.readFileBase64(s,t),l=typeof c=="string"?c:c.toString("base64"),u=Z1(Buffer.from(l,"base64"),i.data.spriteVersionNumber),d=Object.fromEntries(await Promise.all(Object.entries(n.animationPaths??{}).map(async([n,r])=>{let i=t0(e,a,r);if(i==null)return[n,null];let o=await X.readFileBase64(i,t),s=typeof o=="string"?o:o.toString("base64"),c=Buffer.from(s,"base64");return[n,c.length>=10&&c.subarray(0,3).toString("ascii")==="GIF"?"data:image/gif;base64,"+s:null]})));return u==null?null:{directoryPath:a,id:"custom:"+r,displayName:i.data.displayName??i.data.id??r,description:i.data.description,spriteVersionNumber:i.data.spriteVersionNumber,spritesheetDataUrl:u.spritesheetDataUrl,animationDataUrls:d}}catch{return null}}`;
 
-const RENDERER_SOURCE = `const __CODEX_SKIN_USAGE_RENDER_V1__=(()=>{
-  const empty={enabled:false,status:"disabled",tokensLast30s:0,intensity:0,speedMultiplier:1,redPercent:0};
-  let cachedKey="",cachedValue=null;
-  function speed(dataUrl,multiplier){
-    const level=Math.max(1,Math.min(1.5,Number(multiplier)||1));
-    if(level<=1.01||typeof dataUrl!=="string"||!dataUrl.startsWith("data:image/gif;base64,"))return dataUrl;
-    const key=dataUrl.length+":"+dataUrl.slice(-48)+":"+level.toFixed(2);
-    if(key===cachedKey&&cachedValue)return cachedValue;
-    try{
-      const binary=atob(dataUrl.slice(22)),bytes=new Uint8Array(binary.length);
-      for(let index=0;index<binary.length;index+=1)bytes[index]=binary.charCodeAt(index);
-      if(binary.slice(0,3)!=="GIF"||bytes.length<13)return dataUrl;
-      let offset=13,carry=0,changed=false;
-      if((bytes[10]&128)!==0)offset+=3*(2**((bytes[10]&7)+1));
-      const skipBlocks=()=>{while(offset<bytes.length){const size=bytes[offset];offset+=1;if(size===0)return;offset+=size;}};
-      while(offset<bytes.length){
-        const marker=bytes[offset];
-        if(marker===33){
-          const label=bytes[offset+1];
-          if(label===249&&bytes[offset+2]===4&&offset+7<bytes.length){
-            const delay=bytes[offset+4]|bytes[offset+5]<<8;
-            if(delay>0){
-              const desired=Math.max(2,delay/level);
-              let next=Math.floor(desired);
-              carry+=desired-next;
-              if(carry>=1){next+=1;carry-=1;}
-              if(next!==delay){bytes[offset+4]=next&255;bytes[offset+5]=next>>8;changed=true;}
-            }
-            offset+=8;
-          }else{offset+=2;skipBlocks();}
-        }else if(marker===44){
-          if(offset+9>=bytes.length)break;
-          const packed=bytes[offset+9];
-          offset+=10;
-          if((packed&128)!==0)offset+=3*(2**((packed&7)+1));
-          offset+=1;
-          skipBlocks();
-        }else if(marker===59){break;}else{break;}
-      }
-      if(!changed)return dataUrl;
-      const chunks=[];
-      for(let index=0;index<bytes.length;index+=32768)chunks.push(String.fromCharCode(...bytes.subarray(index,index+32768)));
-      cachedKey=key;
-      cachedValue="data:image/gif;base64,"+btoa(chunks.join(""));
-      return cachedValue;
-    }catch{return dataUrl;}
-  }
-  return{empty,speed};
-})();
+const RENDERER_SOURCE = `const __CODEX_SKIN_GIF_RUNTIME_V1__=1;
 function eer(e){return e.spritesheetUrl==null?{assetRef:e.assetRef}:{petId:e.displayName,spriteRowCount:Y9n(e.spriteVersionNumber),spritesheetUrl:e.spritesheetUrl,animationUrls:e.animationUrls}}`;
 
-const RENDERER_COMPONENT = `wer=({assetMap:e,className:t,lookFrame:n,respondToHover:r=!1,source:i,state:a="idle"})=>{"use forget";let[o,s]=(0,Ser.useState)(!1),c=(0,Ser.useRef)(null),[m,k]=(0,Ser.useState)(()=>window.__codexSkinUsage??__CODEX_SKIN_USAGE_RENDER_V1__.empty),l=i.animationUrls?.[a],u=r&&o&&!l?"jumping":a,d=i.assetRef==null?i.spriteRowCount:IN.rows,f=i.animationUrls?.[u]??null,p=f!=null&&u==="running"&&m.enabled===true&&m.status==="active",h=p?__CODEX_SKIN_USAGE_RENDER_V1__.speed(f,m.speedMultiplier):f,g=p&&m.redPercent>0?"sepia("+(m.redPercent/100).toFixed(2)+") saturate("+(1+m.redPercent/24).toFixed(2)+") hue-rotate(-28deg) brightness("+(1-m.redPercent/900).toFixed(2)+")":void 0;return(0,Ser.useEffect)(()=>{let e=e=>k(e.detail??__CODEX_SKIN_USAGE_RENDER_V1__.empty);window.addEventListener("codex-skin-usage",e);return()=>window.removeEventListener("codex-skin-usage",e)},[]),(0,Ser.useEffect)(()=>{let e=c.current;if(e==null)return;if(h!=null){e.style.backgroundPosition="center bottom";return}if(n!=null){e.style.backgroundPosition=fer(n,d);return}let t=uer(u,BLe()||i.petId?.includes("WineFox")),r=t.frames,i=0,a=null;if(e.style.backgroundPosition=fer(der(r,i),d),r.length===1)return;let o=()=>{a=window.setTimeout(()=>{let n=i+1;if(n>=r.length){if(t.loopStartIndex!=null){i=t.loopStartIndex,e.style.backgroundPosition=fer(der(r,i),d),o();return}a=null;return}i=n,e.style.backgroundPosition=fer(der(r,i),d),o()},der(r,i).frameDurationMs)};return o(),()=>{a!=null&&window.clearTimeout(a)}},[u,n,d,h]),(0,Cer.jsx)("div",{ref:c,className:K(ber.Root,t),"data-codex-pet-asset-ref":i.assetRef,"data-codex-pet-id":i.assetRef??i.petId,"data-codex-pet-state":u,"data-codex-skin-usage-level":p?Math.ceil((m.intensity||0)*4):0,onPointerEnter:()=>{r&&s(!0)},onPointerLeave:()=>{r&&s(!1)},style:{backgroundImage:"url("+(h??i.spritesheetUrl??e[i.assetRef])+")",backgroundPosition:h!=null?"center bottom":void 0,backgroundRepeat:h!=null?"no-repeat":void 0,backgroundSize:h!=null?"contain":d==null?void 0:IN.columns*100+"% "+d*100+"%",filter:g},"aria-hidden":"true"})}}));`;
+const RENDERER_COMPONENT = `wer=({assetMap:e,className:t,lookFrame:n,respondToHover:r=!1,source:i,state:a="idle"})=>{"use forget";let[o,s]=(0,Ser.useState)(!1),c=(0,Ser.useRef)(null),l=i.animationUrls?.[a],u=r&&o&&!l?"jumping":a,d=i.assetRef==null?i.spriteRowCount:IN.rows,f=i.animationUrls?.[u]??null,h=f;return(0,Ser.useEffect)(()=>{let e=c.current;if(e==null)return;if(h!=null){e.style.backgroundPosition="center bottom";return}if(n!=null){e.style.backgroundPosition=fer(n,d);return}let t=uer(u,BLe()||i.petId?.includes("WineFox")),r=t.frames,i=0,a=null;if(e.style.backgroundPosition=fer(der(r,i),d),r.length===1)return;let o=()=>{a=window.setTimeout(()=>{let n=i+1;if(n>=r.length){if(t.loopStartIndex!=null){i=t.loopStartIndex,e.style.backgroundPosition=fer(der(r,i),d),o();return}a=null;return}i=n,e.style.backgroundPosition=fer(der(r,i),d),o()},der(r,i).frameDurationMs)};return o(),()=>{a!=null&&window.clearTimeout(a)}},[u,n,d,h]),(0,Cer.jsx)("div",{ref:c,className:K(ber.Root,t),"data-codex-pet-asset-ref":i.assetRef,"data-codex-pet-id":i.assetRef??i.petId,"data-codex-pet-state":u,"data-codex-skin-usage-level":p?Math.ceil((m.intensity||0)*4):0,onPointerEnter:()=>{r&&s(!0)},onPointerLeave:()=>{r&&s(!1)},style:{backgroundImage:"url("+(h??i.spritesheetUrl??e[i.assetRef])+")",backgroundPosition:h!=null?"center bottom":void 0,backgroundRepeat:h!=null?"no-repeat":void 0,backgroundSize:h!=null?"contain":d==null?void 0:IN.columns*100+"% "+d*100+"%"},"aria-hidden":"true"})}}));`;
 
 const MAIN_LOADER_26_908 = MAIN_LOADER.slice(0, MAIN_LOADER.indexOf("async function e0("))
-  + `async function p2(e,t,n,r,i){let a=m2(e,n,r);if(a==null)return null;let o=e.join(a,i);try{let n=JSON.parse(await X.readFile(o,t)),i=s2.safeParse(n);if(!i.success)return null;let s=m2(e,a,i.data.spritesheetPath);if(s==null)return null;let c=await X.readFileBase64(s,t),l=typeof c=="string"?c:c.toString("base64"),u=u2(Buffer.from(l,"base64"),i.data.spriteVersionNumber),d=Object.fromEntries(await Promise.all(Object.entries(n.animationPaths??{}).map(async([n,r])=>{let i=m2(e,a,r);if(i==null)return[n,null];let o=await X.readFileBase64(i,t),s=typeof o=="string"?o:o.toString("base64"),c=Buffer.from(s,"base64");return[n,c.length>=10&&c.subarray(0,3).toString("ascii")=="GIF"?"data:image/gif;base64,"+s:null]})));__CODEX_SKIN_USAGE_SYNC_V1__.start();return u==null?null:{directoryPath:a,id:"custom:"+r,displayName:i.data.displayName??i.data.id??r,description:i.data.description,spriteVersionNumber:i.data.spriteVersionNumber,spritesheetDataUrl:u.spritesheetDataUrl,animationDataUrls:d}}catch{return null}}`;
+  + `async function p2(e,t,n,r,i){let a=m2(e,n,r);if(a==null)return null;let o=e.join(a,i);try{let n=JSON.parse(await X.readFile(o,t)),i=s2.safeParse(n);if(!i.success)return null;let s=m2(e,a,i.data.spritesheetPath);if(s==null)return null;let c=await X.readFileBase64(s,t),l=typeof c=="string"?c:c.toString("base64"),u=u2(Buffer.from(l,"base64"),i.data.spriteVersionNumber),d=Object.fromEntries(await Promise.all(Object.entries(n.animationPaths??{}).map(async([n,r])=>{let i=m2(e,a,r);if(i==null)return[n,null];let o=await X.readFileBase64(i,t),s=typeof o=="string"?o:o.toString("base64"),c=Buffer.from(s,"base64");return[n,c.length>=10&&c.subarray(0,3).toString("ascii")=="GIF"?"data:image/gif;base64,"+s:null]})));return u==null?null:{directoryPath:a,id:"custom:"+r,displayName:i.data.displayName??i.data.id??r,description:i.data.description,spriteVersionNumber:i.data.spriteVersionNumber,spritesheetDataUrl:u.spritesheetDataUrl,animationDataUrls:d}}catch{return null}}`;
 
 const RENDERER_SOURCE_26_908 = RENDERER_SOURCE.slice(0, RENDERER_SOURCE.indexOf("function eer(e)"))
   + `function Alo(e){return e.spritesheetUrl==null?{assetRef:e.assetRef}:{petId:e.id,spriteRowCount:Tlo(e.spriteVersionNumber),spritesheetUrl:e.spritesheetUrl,animationUrls:e.animationUrls}}`;
 
-const RENDERER_COMPONENT_26_908 = `ruo=({assetMap:e,className:t,lookFrame:n,respondToHover:r=!1,source:i,state:a="idle"})=>{"use forget";let[o,s]=(0,tuo.useState)(!1),c=(0,tuo.useRef)(null),[m,k]=(0,tuo.useState)(()=>window.__codexSkinUsage??__CODEX_SKIN_USAGE_RENDER_V1__.empty),l=AXe(),u=i.animationUrls?.[a],d=r&&o&&!u?"jumping":a,p=i.assetRef==null?i.spriteRowCount:r4.rows,h=i.animationUrls?.[d]??null,g=h!=null&&d=="running"&&m.enabled===true&&m.status=="active",f=g?__CODEX_SKIN_USAGE_RENDER_V1__.speed(h,m.speedMultiplier):h,_=g&&m.redPercent>0?"sepia("+(m.redPercent/100).toFixed(2)+") saturate("+(1+m.redPercent/24).toFixed(2)+") hue-rotate(-28deg) brightness("+(1-m.redPercent/900).toFixed(2)+")":void 0;return(0,tuo.useEffect)(()=>{let e=e=>k(e.detail??__CODEX_SKIN_USAGE_RENDER_V1__.empty);window.addEventListener("codex-skin-usage",e);return()=>window.removeEventListener("codex-skin-usage",e)},[]),(0,tuo.useEffect)(()=>{let e=c.current;if(e==null)return;if(f!=null){e.style.backgroundPosition="center bottom";return}if(n!=null){e.style.backgroundPosition=Glo(n,p);return}let t=Ulo(d,l),r=t.frames,i=0,a=null;if(e.style.backgroundPosition=Glo(Wlo(r,i),p),r.length===1)return;let o=()=>{a=window.setTimeout(()=>{let n=i+1;if(n>=r.length){if(t.loopStartIndex!=null){i=t.loopStartIndex,e.style.backgroundPosition=Glo(Wlo(r,i),p),o();return}a=null;return}i=n,e.style.backgroundPosition=Glo(Wlo(r,i),p),o()},Wlo(r,i).frameDurationMs)};return o(),()=>{a!=null&&window.clearTimeout(a)}},[d,n,l,p,f]),(0,nuo.jsx)("div",{ref:c,className:S($lo.Root,t),"data-codex-pet-asset-ref":i.assetRef,"data-codex-pet-id":i.assetRef??i.petId,"data-codex-pet-state":d,"data-codex-skin-usage-level":g?Math.ceil((m.intensity||0)*4):0,onPointerEnter:()=>{r&&s(!0)},onPointerLeave:()=>{r&&s(!1)},style:{backgroundImage:"url("+(f??i.spritesheetUrl??e[i.assetRef])+")",backgroundPosition:f!=null?"center bottom":void 0,backgroundRepeat:f!=null?"no-repeat":void 0,backgroundSize:f!=null?"contain":p==null?void 0:r4.columns*100+"% "+p*100+"%",filter:_},"aria-hidden":"true"})}}));`;
+const RENDERER_COMPONENT_26_908 = `ruo=({assetMap:e,className:t,lookFrame:n,respondToHover:r=!1,source:i,state:a="idle"})=>{"use forget";let[o,s]=(0,tuo.useState)(!1),c=(0,tuo.useRef)(null),l=AXe(),u=i.animationUrls?.[a],d=r&&o&&!u?"jumping":a,p=i.assetRef==null?i.spriteRowCount:r4.rows,h=i.animationUrls?.[d]??null,f=h;return(0,tuo.useEffect)(()=>{let e=c.current;if(e==null)return;if(f!=null){e.style.backgroundPosition="center bottom";return}if(n!=null){e.style.backgroundPosition=Glo(n,p);return}let t=Ulo(d,l),r=t.frames,i=0,a=null;if(e.style.backgroundPosition=Glo(Wlo(r,i),p),r.length===1)return;let o=()=>{a=window.setTimeout(()=>{let n=i+1;if(n>=r.length){if(t.loopStartIndex!=null){i=t.loopStartIndex,e.style.backgroundPosition=Glo(Wlo(r,i),p),o();return}a=null;return}i=n,e.style.backgroundPosition=Glo(Wlo(r,i),p),o()},Wlo(r,i).frameDurationMs)};return o(),()=>{a!=null&&window.clearTimeout(a)}},[d,n,l,p,f]),(0,nuo.jsx)("div",{ref:c,className:S($lo.Root,t),"data-codex-pet-asset-ref":i.assetRef,"data-codex-pet-id":i.assetRef??i.petId,"data-codex-pet-state":d,onPointerEnter:()=>{r&&s(!0)},onPointerLeave:()=>{r&&s(!1)},style:{backgroundImage:"url("+(f??i.spritesheetUrl??e[i.assetRef])+")",backgroundPosition:f!=null?"center bottom":void 0,backgroundRepeat:f!=null?"no-repeat":void 0,backgroundSize:f!=null?"contain":p==null?void 0:r4.columns*100+"% "+p*100+"%"},"aria-hidden":"true"})}}));`;
 
 
 function sha256(buffer) {
@@ -287,10 +205,21 @@ function replaceSection(text, startMarker, endMarker, replacement) {
 }
 
 
+function stripLegacyUsage(text, marker) {
+  const start = text.indexOf(marker);
+  if (start < 0) return text;
+  const tail = "\n})();\n";
+  const end = text.indexOf(tail, start + marker.length);
+  if (end < 0) throw new Error(`旧用量代码结构无法识别：${marker}`);
+  return text.slice(0, start) + text.slice(end + tail.length);
+}
+
+
 function transformMain(buffer, profile) {
   let text = buffer.toString("utf8");
   if (Buffer.byteLength(text, "utf8") !== buffer.length) throw new Error("Main bundle is not UTF-8");
-  if (text.includes("__CODEX_SKIN_USAGE_SYNC_V1__")) return buffer;
+  if (isCurrentPatch(buffer)) return buffer;
+  text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_SYNC_V1__=(()=>{");
   const modern = profile.id === "codex-26.908.4834";
   text = replaceSection(
     text,
@@ -307,7 +236,8 @@ function transformMain(buffer, profile) {
 function transformRenderer(buffer, profile) {
   let text = buffer.toString("utf8");
   if (Buffer.byteLength(text, "utf8") !== buffer.length) throw new Error("Renderer bundle is not UTF-8");
-  if (text.includes("__CODEX_SKIN_USAGE_RENDER_V1__")) return buffer;
+  if (isCurrentPatch(buffer)) return buffer;
+  text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_RENDER_V1__=(()=>{");
   const modern = profile.id === "codex-26.908.4834";
   text = replaceSection(
     text,
@@ -341,11 +271,8 @@ function isGifPatched(name, buffer) {
 }
 
 
-function isUsagePatched(name, buffer) {
-  const text = buffer.toString("utf8");
-  return name === "main"
-    ? text.includes("__CODEX_SKIN_USAGE_SYNC_V1__")
-    : text.includes("__CODEX_SKIN_USAGE_RENDER_V1__");
+function isCurrentPatch(buffer) {
+  return buffer.toString("utf8").includes("__CODEX_SKIN_GIF_RUNTIME_V1__");
 }
 
 
@@ -429,12 +356,12 @@ function inspect(asarPath) {
       sha256: sha256(loaded.buffer),
       integrityOk: verifyIntegrity(loaded.entry, loaded.buffer),
       gifPatched: isGifPatched(name, loaded.buffer),
-      usageLinked: isUsagePatched(name, loaded.buffer),
+      upToDate: isCurrentPatch(loaded.buffer),
     };
   }
   const unpackedCount = Object.values(targets).filter((target) => target.entry.unpacked === true).length;
   const state = unpackedCount === Object.keys(targets).length
-    && Object.values(targets).every((target) => target.gifPatched && target.usageLinked && target.integrityOk)
+    && Object.values(targets).every((target) => target.gifPatched && target.upToDate && target.integrityOk)
     ? "gif-patched"
     : unpackedCount === Object.keys(targets).length
       && Object.values(targets).every((target) => target.gifPatched && target.integrityOk)
@@ -462,7 +389,7 @@ function report(asarPath, info, extra = {}) {
       unpacked: target.entry.unpacked === true,
       integrityOk: target.integrityOk,
       gifPatched: target.gifPatched,
-      usageLinked: target.usageLinked,
+      upToDate: target.upToDate,
     }])),
     ...extra,
   };
@@ -491,7 +418,7 @@ if (args.action === "verify") {
     transformed[name] = name === "main"
       ? transformMain(target.buffer, info.profile)
       : transformRenderer(target.buffer, info.profile);
-    if (!isGifPatched(name, transformed[name]) || !isUsagePatched(name, transformed[name])) {
+    if (!isGifPatched(name, transformed[name]) || !isCurrentPatch(transformed[name])) {
       throw new Error(`${name} transform did not install all runtime markers`);
     }
   }
@@ -501,7 +428,7 @@ if (args.action === "verify") {
       bytes: buffer.length,
       sha256: sha256(buffer),
       gifPatched: isGifPatched(name, buffer),
-      usageLinked: isUsagePatched(name, buffer),
+      upToDate: isCurrentPatch(buffer),
     }])),
   }), null, 2));
 } else if (args.action === "apply") {
@@ -545,7 +472,7 @@ if (args.action === "verify") {
   const previousTargets = Object.fromEntries(Object.entries(info.targets).map(([name, target]) => [name, Buffer.from(target.buffer)]));
   try {
     for (const [name, buffer] of Object.entries(transformed)) {
-      if (!isGifPatched(name, buffer) || !isUsagePatched(name, buffer)) throw new Error(`${name} transform did not install all runtime markers`);
+      if (!isGifPatched(name, buffer) || !isCurrentPatch(buffer)) throw new Error(`${name} transform did not install all runtime markers`);
       const target = info.targets[name];
       const externalPath = overlayPath(asarPath, target.archivePath);
       writeAtomic(externalPath, buffer);
@@ -590,5 +517,3 @@ if (args.action === "verify") {
   if (info.state !== "baseline") throw new Error("Restore verification failed");
   console.log(JSON.stringify(report(asarPath, info, { changed: true }), null, 2));
 }
-
-

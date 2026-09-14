@@ -3,7 +3,9 @@ param(
     [switch]$Plan,
     [switch]$NoLaunch,
     [switch]$NoPrompt,
+    [switch]$SkipStoreCheck,
     [switch]$PluginOnly,
+    [switch]$SkipStudio,
     [string]$ProjectRoot,
     [string]$NodePath,
     [string]$CodexPath
@@ -197,6 +199,27 @@ function Ensure-StoreStopped {
     Write-Step "Store Codex 已关闭，继续安装。"
 }
 
+function Ensure-Studio {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    $studioExe = Join-Path $ProjectRoot "dist\studio\SkinStudio.exe"
+    if (Test-Path -LiteralPath $studioExe -PathType Leaf) {
+        Write-Step "皮肤工坊已经编译过了。"
+        return $studioExe
+    }
+    $builder = Join-Path $ProjectRoot "build_studio.ps1"
+    if (-not (Test-Path -LiteralPath $builder -PathType Leaf)) {
+        Write-Warning "找不到构建脚本：$builder，跳过皮肤工坊编译。"
+        return $null
+    }
+    Write-Step "编译皮肤工坊（独立窗口程序，首次需要几分钟，会下载 .NET 运行时包）。"
+    & $powershellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $builder
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $studioExe -PathType Leaf)) {
+        Write-Warning "皮肤工坊编译没成功，稍后可以双击 启动皮肤工坊.cmd 重试。"
+        return $null
+    }
+    return $studioExe
+}
+
 if (-not (Test-Path -LiteralPath $cliPath -PathType Leaf)) {
     throw "插件文件不完整，找不到：$cliPath"
 }
@@ -228,7 +251,11 @@ if ($PluginOnly) {
         exit 0
     }
     Install-PluginAndSkin -CodexExecutable $codexExe -NodeExecutable $nodeExe
-    Write-Host "完成：插件和 WineFox 皮肤已安装。请新建 Codex 任务以载入插件。" -ForegroundColor Green
+    $studioExe = if ($SkipStudio) { $null } else { Ensure-Studio -ProjectRoot $projectRoot }
+    Write-Host "完成：插件和 WineFox 皮肤已安装。" -ForegroundColor Green
+    Write-Host "皮肤工坊启动器：$(Join-Path $projectRoot '启动皮肤工坊.cmd')"
+    if ($studioExe) { Write-Host "皮肤工坊程序：$studioExe（双击就能改皮肤）" }
+    Write-Host "请新建一个 Codex 任务以载入插件。" -ForegroundColor Green
     exit 0
 }
 
@@ -251,7 +278,11 @@ if ($Plan) {
     exit 0
 }
 
-Ensure-StoreStopped -Executable $package.Executable -AllowPrompt (-not $NoPrompt)
+if ($SkipStoreCheck) {
+    Write-Step "已跳过关闭 Store Codex 的步骤（免交互模式），安装结束后请自行退出 Codex 再启动。"
+} else {
+    Ensure-StoreStopped -Executable $package.Executable -AllowPrompt (-not $NoPrompt)
+}
 
 Write-Step "准备可写 shadow runtime。首次安装需要复制约 1.8 GB，请耐心等待。"
 & $powershellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $shadowInstaller -Action Install -ProjectRoot $projectRoot
@@ -266,7 +297,11 @@ $codexExe = Resolve-Codex -Requested $shadowCodex -Fallback $CodexPath
 Install-PluginAndSkin -CodexExecutable $codexExe -NodeExecutable $nodeExe
 
 if ($NoLaunch) {
-    Write-Host "安装完成。可运行“启动可写 GIF 运行时.cmd”启动。" -ForegroundColor Green
+    $studioExe = if ($SkipStudio) { $null } else { Ensure-Studio -ProjectRoot $projectRoot }
+    Write-Host "安装完成。" -ForegroundColor Green
+    Write-Host "启动器：$(Join-Path $projectRoot '备用启动脚本\启动可写 GIF 运行时.cmd')"
+    if ($studioExe) { Write-Host "皮肤工坊程序：$studioExe（双击就能改皮肤）" }
+    Write-Host "使用前请完全退出 Codex，再双击上面的启动器。" -ForegroundColor Green
     exit 0
 }
 

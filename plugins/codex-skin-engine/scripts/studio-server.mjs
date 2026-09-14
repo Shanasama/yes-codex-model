@@ -1,9 +1,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import { execFile } from "node:child_process";
 import {
-  PLUGIN_ROOT,
   applySkin,
   bootstrap,
   duplicateSkin,
@@ -17,25 +15,13 @@ import {
   skinAsset,
   updateSkin
 } from "./lib/engine.mjs";
-import {
-  clearUsageKey,
-  getUsageBundle,
-  pollUsageNow,
-  saveUsageSettings,
-  startUsageMonitor
-} from "./lib/usage-link.mjs";
 
 const HOST = "127.0.0.1";
 const portIndex = process.argv.indexOf("--port");
 const PORT = portIndex >= 0 ? Number(process.argv[portIndex + 1]) : 43821;
-const SHOULD_OPEN = process.argv.includes("--open");
-const WEB_ROOT = path.join(PLUGIN_ROOT, "web");
 const MAX_BODY = 128 * 1024 * 1024;
 
 const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".gif": "image/gif",
   ".png": "image/png",
@@ -48,7 +34,6 @@ function headers(extra = {}) {
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'",
     ...extra
   };
 }
@@ -98,31 +83,10 @@ function sendFile(response, filePath, downloadName = null) {
   fs.createReadStream(filePath).pipe(response);
 }
 
-function openBrowser() {
-  const url = `http://${HOST}:${PORT}`;
-  if (process.platform === "win32") {
-    execFile("powershell.exe", ["-NoProfile", "-Command", `Start-Process '${url}'`], { windowsHide: true });
-  }
-}
-
 async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/health") return sendJson(response, 200, { ok: true, service: "codex-skin-engine", version: "1.0.0" });
   if (request.method === "GET" && url.pathname === "/api/bootstrap") return sendJson(response, 200, { ok: true, data: bootstrap() });
   if (request.method === "GET" && url.pathname === "/api/runtime") return sendJson(response, 200, { ok: true, data: runtimeStatus(url.searchParams.get("path")) });
-  if (request.method === "GET" && url.pathname === "/api/usage") return sendJson(response, 200, { ok: true, data: getUsageBundle() });
-
-  if (request.method === "POST" && url.pathname === "/api/usage/settings") {
-    const saved = saveUsageSettings(await readJsonBody(request));
-    const state = saved.settings.enabled ? await pollUsageNow() : saved.state;
-    return sendJson(response, 200, { ok: true, data: { settings: saved.settings, state } });
-  }
-  if (request.method === "POST" && url.pathname === "/api/usage/refresh") {
-    const state = await pollUsageNow();
-    return sendJson(response, 200, { ok: true, data: { ...getUsageBundle(), state } });
-  }
-  if (request.method === "DELETE" && url.pathname === "/api/usage/key") {
-    return sendJson(response, 200, { ok: true, data: clearUsageKey() });
-  }
 
   if (request.method === "GET" && url.pathname.startsWith("/api/asset/")) {
     const parts = url.pathname.slice("/api/asset/".length).split("/").map(decodeURIComponent);
@@ -183,33 +147,18 @@ const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${HOST}:${PORT}`);
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);
-    if (url.pathname === "/favicon.ico") {
-      response.writeHead(204, headers());
-      return response.end();
-    }
-    const requested = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.slice(1));
-    if (requested.includes("..") || requested.includes("\\")) return sendError(response, new Error("路径无效"), 403);
-    const filePath = path.resolve(WEB_ROOT, requested);
-    if (!filePath.startsWith(path.resolve(WEB_ROOT) + path.sep) && filePath !== path.join(WEB_ROOT, "index.html")) return sendError(response, new Error("路径无效"), 403);
-    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return sendError(response, new Error("页面不存在"), 404);
-    sendFile(response, filePath);
+    sendJson(response, 404, { ok: false, error: "本机引擎只提供 API；界面请运行 dist\\studio\\SkinStudio.exe" });
   } catch (error) {
     sendError(response, error);
   }
 });
 
-startUsageMonitor();
-
 server.once("error", (error) => {
-  if (error.code === "EADDRINUSE" && SHOULD_OPEN) {
-    openBrowser();
-    process.exit(0);
-  }
+  if (error.code === "EADDRINUSE") process.exit(0);
   console.error(error);
   process.exit(1);
 });
 
 server.listen(PORT, HOST, () => {
   console.log(`Codex Skin Engine: http://${HOST}:${PORT}`);
-  if (SHOULD_OPEN) openBrowser();
 });

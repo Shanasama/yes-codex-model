@@ -12,12 +12,11 @@ import {
   restoreRuntime,
   runtimeStatus
 } from "./lib/engine.mjs";
-import { getUsageBundle, startUsageMonitor } from "./lib/usage-link.mjs";
 
 const TOOLS = [
   {
     name: "open_studio",
-    description: "启动并打开 Codex Skin Engine 本地皮肤工坊。",
+    description: "打开 Codex 皮肤工坊原生窗口（dist\\studio\\SkinStudio.exe）。还没编译过时返回编译提示。",
     inputSchema: { type: "object", properties: {}, additionalProperties: false }
   },
   {
@@ -89,11 +88,6 @@ const TOOLS = [
       required: ["action"],
       additionalProperties: false
     }
-  },
-  {
-    name: "usage_link_status",
-    description: "读取可选的 OpenAI API 用量动画联动状态；不会返回已保存的 Key。",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false }
   }
 ];
 
@@ -117,7 +111,6 @@ function callTool(name, args) {
       if (args.action === "status") return runtimeStatus(args.asar_path || null);
       if (args.action === "install") return patchRuntime(args.asar_path || null);
       return restoreRuntime(args.asar_path || null);
-    case "usage_link_status": return getUsageBundle();
     default: throw new Error(`未知工具：${name}`);
   }
 }
@@ -127,7 +120,6 @@ function reply(message) {
 }
 
 const input = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
-startUsageMonitor();
 input.on("line", (line) => {
   if (!line.trim()) return;
   let request;

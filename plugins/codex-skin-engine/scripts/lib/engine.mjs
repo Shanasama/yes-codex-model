@@ -484,6 +484,62 @@ function runPatcher(action, asarPath, backupDir = null) {
   }
 }
 
+function runtimeBackupDir(asarPath) {
+  return path.join(DATA_ROOT, "backups", "runtime", crypto.createHash("sha1").update(asarPath).digest("hex").slice(0, 12));
+}
+
+function readAsarHeader(asarPath) {
+  const descriptor = fs.openSync(asarPath, "r");
+  try {
+    const prefix = Buffer.alloc(8);
+    if (fs.readSync(descriptor, prefix, 0, 8, 0) !== 8) throw new Error(`无法读取 ASAR 头部：${asarPath}`);
+    const headerSize = prefix.readUInt32LE(4);
+    if (!headerSize) throw new Error(`无法读取 ASAR 头部：${asarPath}`);
+    const header = Buffer.alloc(headerSize);
+    let position = 0;
+    while (position < headerSize) {
+      const read = fs.readSync(descriptor, header, position, headerSize - position, 8 + position);
+      if (!read) throw new Error(`无法读取 ASAR 头部：${asarPath}`);
+      position += read;
+    }
+    return header;
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function shadowSourceAsar(asarPath) {
+  let current = path.dirname(path.resolve(asarPath));
+  for (let depth = 0; depth < 4; depth += 1) {
+    const metadataPath = path.join(current, "shadow-runtime.json");
+    if (fs.existsSync(metadataPath)) {
+      try {
+        const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+        if (metadata && typeof metadata.sourceAsar === "string" && fs.existsSync(metadata.sourceAsar)) return metadata.sourceAsar;
+      } catch {
+        return null;
+      }
+      return null;
+    }
+    current = path.dirname(current);
+  }
+  return null;
+}
+
+function ensureRuntimeHeaderBackup(asarPath, status) {
+  const backupDir = runtimeBackupDir(asarPath);
+  const headerBackup = path.join(backupDir, "header-baseline.pickle");
+  if (fs.existsSync(headerBackup)) return backupDir;
+  const sourceAsar = shadowSourceAsar(asarPath);
+  if (!sourceAsar) return backupDir;
+  if (fs.statSync(sourceAsar).size !== fs.statSync(asarPath).size) return backupDir;
+  const header = readAsarHeader(sourceAsar);
+  if (header.length !== status.headerSize) return backupDir;
+  fs.mkdirSync(backupDir, { recursive: true });
+  fs.writeFileSync(headerBackup, header);
+  return backupDir;
+}
+
 export function runtimeStatus(requestedPath = null) {
   const candidates = requestedPath ? [path.resolve(requestedPath)] : runtimeCandidates();
   if (!candidates.length) return { state: "not-found", ok: false, message: "未发现可写的 Codex app.asar，可在设置中指定路径。" };
@@ -516,7 +572,9 @@ export function patchRuntime(requestedPath = null) {
   if (status.state !== "baseline" && status.state !== "gif-patched-legacy") throw new Error(status.message || "当前 Codex 版本不受补丁支持");
   setRuntimePath(status.asar);
   runPatcher("plan", status.asar);
-  const backupDir = path.join(DATA_ROOT, "backups", "runtime", crypto.createHash("sha1").update(status.asar).digest("hex").slice(0, 12));
+  const backupDir = status.state === "gif-patched-legacy"
+    ? ensureRuntimeHeaderBackup(status.asar, status)
+    : runtimeBackupDir(status.asar);
   const result = runPatcher("apply", status.asar, backupDir);
   return { ...result, backupDir, restartRequired: true };
 }
@@ -526,7 +584,9 @@ export function restoreRuntime(requestedPath = null) {
   if (!status.asar) throw new Error(status.message || "未发现运行时");
   if (status.state === "baseline") return { ...status, changed: false, restartRequired: false };
   if (status.state !== "gif-patched" && status.state !== "gif-patched-legacy") throw new Error(status.message || "运行时状态不明确，拒绝回滚");
-  const backupDir = path.join(DATA_ROOT, "backups", "runtime", crypto.createHash("sha1").update(status.asar).digest("hex").slice(0, 12));
+  const backupDir = status.state === "gif-patched-legacy"
+    ? ensureRuntimeHeaderBackup(status.asar, status)
+    : runtimeBackupDir(status.asar);
   const result = runPatcher("restore", status.asar, backupDir);
   return { ...result, backupDir, restartRequired: true };
 }
@@ -550,9 +610,20 @@ export function skinAsset(id, relativePath) {
   return absolute;
 }
 
+export function studioExecutable() {
+  return path.join(path.resolve(PLUGIN_ROOT, "..", ".."), "dist", "studio", "SkinStudio.exe");
+}
+
 export function openStudio() {
-  const server = path.join(PLUGIN_ROOT, "scripts", "studio-server.mjs");
-  const child = spawn(process.execPath, [server, "--open"], { detached: true, windowsHide: true, stdio: "ignore" });
+  const executable = studioExecutable();
+  if (!fs.existsSync(executable)) {
+    return {
+      started: false,
+      executable,
+      message: "皮肤工坊还没编译。请先双击仓库根目录的 启动皮肤工坊.cmd，它会编译出一个独立窗口程序。"
+    };
+  }
+  const child = spawn(executable, [], { detached: true, stdio: "ignore", cwd: path.dirname(executable) });
   child.unref();
-  return { url: "http://127.0.0.1:43821", message: "皮肤工坊已启动" };
+  return { started: true, executable, message: "皮肤工坊窗口已打开" };
 }

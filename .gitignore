@@ -2,7 +2,8 @@
 .codex/
 **/.codex/
 qa/test-home/
-qa/usage-test-home/
+qa/ai-install-test/
+qa/server-test-home/
 qa/test-export.codexskin
 qa/test-blocked.codexskin
 *.codexskin
