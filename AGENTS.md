@@ -3,6 +3,12 @@
 用户把本仓库链接发给你并要求安装时，按下面执行。你的任务到“告诉用户启动器在
 哪里”为止，不要替用户启动 Codex。
 
+**这份文件是任务书，不是操作手册。** 下面写清了三件事：要达成什么、边界在哪、仓库里
+有哪些现成工具。具体怎么组合、先做哪步、出问题怎么绕，你自己判断；但边界不许越。
+
+遇到本文件没写的情况，先跑只读探测（见「Codex 更新了怎么办」），拿到事实再决定，
+不要凭猜动手，也不要为了让流程走通而绕开安全检查。
+
 中文说明在前，完整英文版在后。
 
 ## 中文
@@ -14,6 +20,16 @@
 - Node.js 20 或更新；脚本也会自动查找 Codex 自带的 Node
 - 编译皮肤工坊窗口程序需要 .NET 7 SDK（只有 .NET 运行时不够；缺 SDK 时安装脚本会给出
   中文提示并以「部分完成」结束，插件和皮肤不受影响）
+
+### 两种档位，先问清楚再装
+
+| 档位 | 做法 | 效果 | 代价 |
+| --- | --- | --- | --- |
+| **通用档**（推荐默认） | 只用官方图集接口，不打补丁 | 九种状态逐帧播放，Codex 怎么更新都不受影响 | 每种状态最多 4～8 帧，帧间隔由官方定 |
+| **保真档** | 在 Codex 副本里打补丁，直接播原始 GIF | 不转码、不缩放、不删帧（267 帧也不会被压成 6 帧） | 依赖具体版本，Codex 更新后可能要重新适配 |
+
+用户没明说就按通用档；说了要「原始 GIF 效果」「不要掉帧」这类再上保真档，并且要提前告知
+保真档的代价。两个档位可以同时存在，装完再切换也是允许的。
 
 ### 安装步骤
 
@@ -83,6 +99,50 @@ Node 运行时和引擎脚本，整个文件夹可以拷到别的电脑直接双
 可用、只有工坊没编译，把真实报错交给用户，让他按提示补 .NET 7 SDK 后双击
 `启动皮肤工坊.cmd` 重试（不用重装插件）。
 
+### Codex 更新了怎么办
+
+补丁只认识记录过的版本和 SHA-256，官方一更新就可能失效 —— 这不是故障，是这套方案的
+固有代价。别猜，按下面顺序拿事实：
+
+1. 只读探测，不改任何文件：
+
+```powershell
+node qa\patch-dry-run.mjs
+```
+
+   它会自己找 Store 版 Codex，输出：`verdict` 是 `patchable`（能打）、`already-patched`
+   （已打）、`legacy`（旧补丁，启动器会原地升级）、`unsupported`（不认识这个版本）还是
+   `broken`（认识但改不动）。同时给出两个 bundle 的 `archivePath` 和 `sha256`。
+2. `unsupported` / `broken` 时：把新版 bundle 抽出来看结构有没有变（`qa\inspect-asar-targets.mjs`
+   和 `qa\read-asar-snippets.mjs`），比对 `TARGET_PROFILES` 里的锚点；新版只是重编译、锚点
+   没变的话，通常只要补一条 profile（渲染层文件名 + 基线哈希）和状态判定。
+3. 真改不动就和用户说实话：保真档这个版本先不上，退回通用档（官方图集接口，跟版本无关），
+   或者等适配。**不要**为了让安装跑完而放宽哈希校验、跳过语法检查、或者声称成功。
+
+改完适配后必须验证：`--action plan` → `--action apply` → `--action verify` 全过，且
+`--action restore` 能干净回到 `baseline`。
+
+### 改这个仓库时的规矩
+
+用户可能让你改代码而不只是安装，改完必须自检，缺一项都别提交：
+
+```powershell
+.\dist\studio\SkinStudio.exe --selftest      # 工坊布局自检，要求 failures=0
+node --test qa\bundle-syntax.test.mjs        # 补丁替换块的语法检查
+node --test qa\hot-reload.test.mjs           # 热更新注入与查询失效
+$env:CODEX_SKIN_TEST_HOME = "qa/test-home"; node qa\core-check.mjs   # 引擎增删改查
+```
+
+改完插件本体（`plugins\codex-skin-engine\`）要刷缓存版本号再重装，否则 Codex 还在用旧副本：
+
+```powershell
+python C:\Users\yuan\.codex\skills\.system\plugin-creator\scripts\update_plugin_cachebuster.py .\plugins\codex-skin-engine
+codex plugin add codex-skin-engine@personal
+```
+
+还有两条红线：**别改用户已有的备份路径**（`skin-engine\backups\` 下面那些是用户的退路），
+**别把删除做成真删**（皮肤删除是移到备份目录，不是 `rm`）。
+
 ### 注意事项
 
 - 不要在 AI 会话里运行根目录的 `一键启动.cmd`，它会关闭 Store 版
@@ -101,6 +161,13 @@ Send this repository link to your AI and ask it to install it. Your AI follows
 the steps below, reports the launcher path, and stops there. It must not start
 Codex for the user.
 
+**This file is a brief, not a checklist.** It states the goal, the hard limits, and the
+tools the repository already ships. How to combine them, what to do first, and how to work
+around a failure is your call - but the limits are not.
+
+When the situation is not covered here, run the read-only probe (see "After a Codex update"),
+get facts first, and do not guess or bypass a safety check just to make the flow finish.
+
 ### Requirements
 
 - Windows 10 / 11
@@ -110,6 +177,16 @@ Codex for the user.
 - Building the Skin Studio window app needs the .NET 7 SDK; the .NET runtime
   alone is not enough. Without the SDK the installer reports "partial install"
   and explains what to do; the plugin and the skin are unaffected.
+
+### Two tiers - ask first
+
+| Tier | How | Result | Cost |
+| --- | --- | --- | --- |
+| **Universal** (default) | Official spritesheet interface only, no patching | Nine states animate; survives any Codex update | 4-8 frames per state, frame timing fixed by Codex |
+| **Faithful** | Patch a copy of Codex so it plays the source GIFs directly | No transcoding, no scaling, no dropped frames (267 frames stay 267) | Tied to specific builds; a Codex update may need re-adapting |
+
+Default to universal. Only go faithful when the user asks for source-GIF fidelity, and say upfront
+what it costs. Both can coexist, and switching later is allowed.
 
 ### Steps
 
@@ -185,6 +262,57 @@ the installer prints "partial install" and exits with code 2. Do not claim a ful
 success: say that the plugin, skin and runtime are usable but the studio was not built,
 report the real error, and tell the user to install the .NET 7 SDK and double-click
 `启动皮肤工坊.cmd` to retry (no plugin reinstall needed).
+
+### After a Codex update
+
+The patch only knows the builds and SHA-256 hashes recorded in the source, so an official
+update can invalidate it. That is not a bug, it is the cost of this approach. Do not guess -
+get facts:
+
+1. Read-only probe, changes nothing:
+
+```powershell
+node qa\patch-dry-run.mjs
+```
+
+   It finds the Store build itself and reports `verdict`: `patchable`, `already-patched`,
+   `legacy` (an older patch the launcher upgrades in place), `unsupported` (unknown build) or
+   `broken` (known build, transform fails). It also prints both bundles' `archivePath` and
+   `sha256`.
+2. On `unsupported` / `broken`: extract the new bundles (`qa\inspect-asar-targets.mjs`,
+   `qa\read-asar-snippets.mjs`) and compare the anchors with `TARGET_PROFILES`. When the update
+   only recompiled the renderer, adding one profile (renderer filename + baseline hash) and
+   updating the state checks is often the whole job.
+3. If it really cannot be adapted, tell the user the truth: the faithful tier is unavailable on
+   that build for now, fall back to the universal tier or wait. **Never** relax hash checks,
+   skip syntax validation, or claim success to make the install finish.
+
+After adapting, verify `--action plan` -> `--action apply` -> `--action verify` all pass, and
+that `--action restore` returns cleanly to `baseline`.
+
+### Rules for changing this repository
+
+The user may ask you to change code, not just install it. Every change must pass these checks;
+do not commit without them:
+
+```powershell
+.\dist\studio\SkinStudio.exe --selftest      # studio layout self-test, expects failures=0
+node --test qa\bundle-syntax.test.mjs        # patch replacement blocks must stay parseable
+node --test qa\hot-reload.test.mjs           # hot-reload injection and query invalidation
+$env:CODEX_SKIN_TEST_HOME = "qa/test-home"; node qa\core-check.mjs   # engine CRUD
+```
+
+After changing the plugin itself (`plugins\codex-skin-engine\`), bump the cachebuster and
+reinstall, otherwise Codex keeps using the old copy:
+
+```powershell
+python C:\Users\yuan\.codex\skills\.system\plugin-creator\scripts\update_plugin_cachebuster.py .\plugins\codex-skin-engine
+codex plugin add codex-skin-engine@personal
+```
+
+Two red lines: never move or rewrite the user's existing backup paths (everything under
+`skin-engine\backups\` is their way back), and never turn the skin delete into a real delete -
+it moves the skin to the backup folder on purpose.
 
 ### Rules
 

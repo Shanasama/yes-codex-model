@@ -1,8 +1,15 @@
 # codex皮肤插件
 
-**这是干什么的**：给 Codex 桌面版的宠物换动画。装好之后，宠物在待机、工作、等待、跳跃
-等九种状态里会播放你自己准备的原始 GIF —— 不转码、不缩放、不删帧，也不需要联网。仓库里
-还带一个独立的皮肤工坊窗口程序，双击就能改皮肤、预览动画、导入导出皮肤包。
+**这是干什么的**：给 Codex 桌面版装自己的宠物皮肤。你不用去找某个画师授权、也不用把画拆成
+九张图 —— 把素材做成一款皮肤，导进仓库带的**皮肤工坊**（独立窗口程序），预览满意了一键
+应用到 Codex，宠物就换成你的了。工坊还支持导入导出 `.codexskin` 皮肤包，方便分享。
+
+装好之后有两种档位的效果，AI 会按你的选择来配：
+
+- **通用档（推荐，跟 Codex 版本无关）**：走 Codex 官方的图集接口，宠物按九种状态逐帧播放。
+  官方怎么更新都不受影响，代价是每种状态最多 4～8 帧、帧间隔由官方定。
+- **保真档（可选增强）**：让 Codex 直接播你自己的原始 GIF —— 不转码、不缩放、不删帧，
+  267 帧也不会被压成 6 帧。代价是要在 Codex 的副本里打补丁，Codex 更新后可能要等适配。
 
 内置一套「酒狐（WineFox）」皮肤，素材来自 B 站 UP 主酒石酸君的 Minecraft YSM 皮肤，
 本仓库是第三方 Codex 适配。
@@ -17,18 +24,20 @@
 
 ### 1. 让 AI 装（推荐）
 
-把这个仓库的 GitHub 链接和下面这段话一起发给 AI（Claude、ChatGPT、Codex 都行）：
+把这个仓库的 GitHub 链接和下面这段话一起发给 AI（Claude、ChatGPT、Codex 都行）。
+**你只要说清楚想要什么，剩下的让 AI 自己看仓库决定**：
 
 ```text
 安装它：https://github.com/Shanasama/yes-codex-model
-先读仓库里的 AGENTS.md，按里面的步骤先做环境体检（Node、.NET SDK、磁盘空间），
-再一条龙装好。装完把体检结果和启动脚本路径告诉我，我自己启动。
+先读仓库里的 AGENTS.md。做环境体检，再按我的情况装好。
+我要的档位：（通用档 / 保真档 / 你看着办）
+装完把体检结果、你实际装了什么、启动脚本路径告诉我，我自己启动。
 ```
 
-AI 会自己克隆仓库、先跑一次环境体检（Node、.NET SDK、磁盘空间），再装好插件和完整 GIF
-运行时，然后把体检结果和启动脚本路径告诉你。
-你只要完全退出 Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自定义宠物 里选中
-这套皮肤（只有第一次要选）。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
+AI 会克隆仓库、做体检、装插件和皮肤，然后把结果和启动脚本路径告诉你。你只要完全退出
+Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自定义宠物 里选中这套皮肤
+（只有第一次要选）。机器可读的步骤在 [AGENTS.md](AGENTS.md)，里面也写了 Codex 更新后
+该怎么重新适配。
 
 ### 2. 或者自己双击装
 
@@ -106,7 +115,10 @@ Windows 只给读权限：往里写会被系统直接拒绝，而且它受 Store
   「恢复兼容模式」也能把副本还原成没打过补丁的状态。
 - **占地方**：一份约 1.8 GB。Codex 升级后版本号变了会再复制一份新的，旧的那份可以自己删。
 - **不是随便哪个版本都能改**：补丁只认代码里记录过的版本和 SHA-256，Codex 更新后如果
-  不认识就直接拒绝安装，而不是把新版程序改坏。被旧版本打过补丁的运行时可以原地升级。
+ 不认识就直接拒绝安装，而不是把新版程序改坏。被旧版本打过补丁的运行时可以原地升级。
+  支持的版本记录在
+  `plugins\codex-skin-engine\scripts\patch_codex_gif_runtime.mjs` 的 `TARGET_PROFILES` 里；
+  想先确认某个版本能不能打，跑只读探测 `node qa\patch-dry-run.mjs`，它不会改任何文件。
 - **改了皮肤立刻生效**：补丁会在宠物目录有变化时叫 Codex 界面重新读盘，所以在工坊里换完
   动作，正在跑的宠物当场就变，不用重启，也不用切换宠物。
 
@@ -145,15 +157,20 @@ $env:CODEX_SKIN_TEST_HOME = "qa/test-home"
 node qa\core-check.mjs
 ```
 
+Codex 更新后想知道还能不能打补丁，跑只读探测（不改任何文件）：
+
+```powershell
+node qa\patch-dry-run.mjs
+```
+
 ---
 
 # Codex Skin Engine
 
-**What this is.** A tool that swaps Codex desktop pet animations for real GIFs. Once
-installed, your pet plays your own source GIFs in all nine states - idle, working,
-waiting, jumping and so on - with no transcoding, no scaling and no dropped frames, and
-no network access. The repository also ships a standalone skin studio window so you can
-edit skins, preview animations and import/export skin packs by double-clicking.
+**What this is.** A way to put your own pet skin into Codex Desktop. You do not need an
+artist to sign off and you do not have to cut the art into nine images: build the art into a
+skin, drop it into the bundled **skin studio** window, preview it, and apply it to Codex in
+one click. The studio also imports and exports shareable `.codexskin` packs.
 
 It bundles a "WineFox" skin created by Bilibili creator 酒石酸君 for Minecraft's YSM
 mod; this repository is a third-party Codex adaptation.
@@ -169,20 +186,23 @@ mod; this repository is a third-party Codex adaptation.
 
 ### 1. Let an AI install it (recommended)
 
-Send the repository link together with this text to any agent that can read the repo:
+Send the repository link together with this text to any agent that can read the repo. Two
+tiers exist, and the agent picks one from what you say:
 
 ```text
 Install it: <paste the GitHub link here>
-Read the repository's AGENTS.md first and run the environment check-up it describes
-(Node, .NET SDK, free disk space), then follow it end to end.
-Tell me the check-up result and where the launcher is. I will start it myself.
+Read the repository's AGENTS.md first. Run the environment check-up, then install it for my
+setup.
+Tier I want: (universal / faithful / your call)
+Tell me the check-up result, what you actually installed, and where the launcher is. I will
+start it myself.
 ```
 
-The agent clones the repo, runs an environment check-up (Node, .NET SDK, free disk space),
-installs the plugin plus the full GIF runtime, and reports the check-up result together
-with the launcher path. You then only have to fully quit Codex and double-click that
-launcher, and finally pick the skin in Codex settings → Pets → Custom pets (first install
-only). The machine-readable steps live in [AGENTS.md](AGENTS.md).
+The agent clones the repo, runs the check-up, installs the plugin and skin, and reports the
+result together with the launcher path. You then quit Codex, double-click that launcher, and
+pick the skin in Codex settings → Pets → Custom pets (first install only). The
+machine-readable steps, including how to re-adapt after a Codex update, live in
+[AGENTS.md](AGENTS.md).
 
 ### 2. Or install it by double-clicking
 
@@ -272,6 +292,9 @@ Worth knowing:
 - **Only known builds are patched.** The patch accepts only the Codex versions and SHA-256
   hashes recorded in the source; after an update it refuses to install instead of breaking
   a newer build. Runtimes patched by older releases are upgraded in place.
+  The supported versions are listed in `TARGET_PROFILES` inside
+  `plugins\\codex-skin-engine\\scripts\\patch_codex_gif_runtime.mjs`. To check one build without
+  changing anything, run the read-only probe `node qa\\patch-dry-run.mjs`.
 - **Skin edits show up live.** The patch makes the Codex UI re-read the pet folder whenever it
   changes, so a running pet switches to your new animations right away - no restart, no pet
   switching.

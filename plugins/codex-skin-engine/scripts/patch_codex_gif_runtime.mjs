@@ -52,7 +52,30 @@ const TARGET_PROFILES = [
       ]),
     },
   },
+  {
+    id: "codex-26.908.9136",
+    main: {
+      archivePath: ".vite/build/src-CCXHtyvY.js",
+      supportedHashes: new Set([
+        "a42da38cbb14b28399f1d54fcf453bffc5e9802663e7e098f187c8378f4c7a40",
+      ]),
+      legacyPatchHashes: new Set([
+        "1e24affe40d3fcb3fb4cd98c09da087520ba877f1686afddbf074ea438537a4a",
+      ]),
+    },
+    renderer: {
+      archivePath: "webview/assets/app-initial-bcc2ff475eb6.js",
+      supportedHashes: new Set([
+        "3c15444f96a8d48844258618fe0d4278409e626f0ee563a77d2c669ec669c510",
+      ]),
+      legacyPatchHashes: new Set([]),
+    },
+  },
 ];
+
+
+// 主进程 bundle 在 26.908.4834 与 26.908.9136 两版之间没变，只有渲染层换了实现。
+const MODERN_PROFILE_IDS = new Set(["codex-26.908.4834", "codex-26.908.9136"]);
 
 const MAIN_LOADER = `const __CODEX_SKIN_GIF_RUNTIME_V1__=1;
 async function e0(e,t,n,r,i){let a=t0(e,n,r);if(a==null)return null;let o=e.join(a,i);try{let n=JSON.parse(await X.readFile(o,t)),i=J1.safeParse(n);if(!i.success)return null;let s=t0(e,a,i.data.spritesheetPath);if(s==null)return null;let c=await X.readFileBase64(s,t),l=typeof c=="string"?c:c.toString("base64"),u=Z1(Buffer.from(l,"base64"),i.data.spriteVersionNumber),d=Object.fromEntries(await Promise.all(Object.entries(n.animationPaths??{}).map(async([n,r])=>{let i=t0(e,a,r);if(i==null)return[n,null];let o=await X.readFileBase64(i,t),s=typeof o=="string"?o:o.toString("base64"),c=Buffer.from(s,"base64");return[n,c.length>=10&&c.subarray(0,3).toString("ascii")==="GIF"?"data:image/gif;base64,"+s:null]})));return u==null?null:{directoryPath:a,id:"custom:"+r,displayName:i.data.displayName??i.data.id??r,description:i.data.description,spriteVersionNumber:i.data.spriteVersionNumber,spritesheetDataUrl:u.spritesheetDataUrl,animationDataUrls:d}}catch{return null}}`;
@@ -231,7 +254,7 @@ function transformMain(buffer, profile) {
   if (isCurrentPatch(buffer)) return buffer;
   text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_SYNC_V1__=(()=>{");
   text = stripMarkerDeclaration(stripMarkerDeclaration(text, GIF_MARKER), HOT_RELOAD_MARKER);
-  const modern = profile.id === "codex-26.908.4834";
+  const modern = MODERN_PROFILE_IDS.has(profile.id);
   text = replaceSection(
     text,
     modern ? "async function p2(" : "async function e0(",
@@ -250,8 +273,8 @@ function transformRenderer(buffer, profile) {
   if (isCurrentPatch(buffer)) return buffer;
   text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_RENDER_V1__=(()=>{");
   text = stripMarkerDeclaration(stripMarkerDeclaration(text, GIF_MARKER), HOT_RELOAD_MARKER);
-  const modern = profile.id === "codex-26.908.4834";
   const queryClientGetter = resolveQueryClientGetter(text);
+  const modern = MODERN_PROFILE_IDS.has(profile.id);
   text = replaceSection(
     text,
     modern ? "function Alo(e)" : "function eer(e)",
