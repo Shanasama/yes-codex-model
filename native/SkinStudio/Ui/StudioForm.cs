@@ -412,7 +412,7 @@ internal sealed class StudioForm : Form
         _applyHint.Font = Theme.Small;
         _applyHint.ForeColor = Theme.AccentInk;
         _applyHint.BackColor = Theme.Sidebar;
-        _applyHint.Text = "应用完还要完全退出并重启 Codex，再到 Codex 设置 → 宠物 → 自定义宠物 里选中它，皮肤才会显示。";
+        _applyHint.Text = "应用后宠物会自己换上，不用重启、也不用重新选；只有第一次装的时候要去 Codex 设置 → 宠物 → 自定义宠物 里选中它一次。";
 
         _openPets.Text = "打开宠物目录";
         _openPets.Icon = Glyph.Folder;
@@ -1132,7 +1132,7 @@ internal sealed class StudioForm : Form
         var skin = _selected;
         if (skin is null || _busy) return;
         if (!StudioDialog.Confirm(this, "应用到 Codex",
-                $"将把「{skin.DisplayName}」的九种动作写入 Codex 宠物目录，现有版本会自动备份。应用后请完全退出并重启 Codex，再打开 Codex 设置 → 宠物 → 自定义宠物 选中它，皮肤才会显示。",
+                $"将把「{skin.DisplayName}」的九种动作写入 Codex 宠物目录，现有版本会自动备份。装好完整动画运行时后，应用会立刻生效，宠物自己就换上了，不用重启；只有第一次需要打开 Codex 设置 → 宠物 → 自定义宠物 选中它。",
                 "应用")) return;
 
         await RunBusyAsync("正在应用到 Codex…", async () =>
@@ -1141,7 +1141,7 @@ internal sealed class StudioForm : Form
             _model = _model with { LastApply = receipt };
             RenderSkinList();
             RenderReceipt();
-            ShowToast($"已应用「{receipt.Name}」。重启 Codex 后，到 设置 → 宠物 → 自定义宠物 选中它");
+            ShowToast($"已应用「{receipt.Name}」。宠物马上自己换上，不用重启；第一次装的话先去 设置 → 宠物 → 自定义宠物 里选中它");
         });
     }
 

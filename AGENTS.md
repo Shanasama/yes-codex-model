@@ -68,8 +68,10 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_cl
 - 已经装好了什么
 - 启动器的绝对路径：`<仓库目录>\备用启动脚本\启动可写 GIF 运行时.cmd`
 - 启动前要完全退出 Codex，然后双击这个启动器
-- **最后一步（必须说）**：重启 Codex 后，去 Codex 设置 → 宠物 → 自定义宠物 里选中刚
-  应用的皮肤，宠物才会变；不选的话看起来跟没装一样
+ - **第一次的最后一步（必须说）**：重启 Codex 后，去 Codex 设置 → 宠物 → 自定义宠物 里
+   选中刚应用的皮肤，宠物才会变；不选的话看起来跟没装一样
+ - 只有第一次需要这一步：补丁会在宠物目录变化时自动刷新界面，所以选中过一次之后，在工坊里
+   换皮肤、换动作会立刻生效，不用重启、也不用切换宠物
 - 皮肤工坊窗口程序的路径：`<仓库目录>\dist\studio\SkinStudio.exe`，双击就能改皮肤
 
 只安装插件时，告诉用户双击根目录的 `启动皮肤工坊.cmd`，并新建一个 Codex
@@ -86,8 +88,8 @@ Node 运行时和引擎脚本，整个文件夹可以拷到别的电脑直接双
 - 不要在 AI 会话里运行根目录的 `一键启动.cmd`，它会关闭 Store 版
   Codex，也就是你自己所在的程序。
 - 不要声称已经启动成功，启动必须由用户手动完成。
-- 不要只说“重启 Codex 就生效”：应用皮肤后用户还必须在 Codex 设置 → 宠物 → 自定义宠物
-  里选中它。
+ - 别把“选中宠物”说漏：第一次装好后用户必须在 Codex 设置 → 宠物 → 自定义宠物 里选中它。
+   但也别把后面的改动说成要重启：选中过一次之后，换皮肤/换动作是自动生效的。
 - 失败时把真实报错原文交给用户，不要编造成功结果。
 - 找不到 Store 版 Codex 时用 `-PluginOnly`，并说明完整 GIF 播放需要 Store 版。
 - 酒狐素材由哔哩哔哩 UP 主“酒石酸君”创作，原用于 Minecraft 的 Yes Steve
@@ -165,8 +167,11 @@ Check that the output contains no errors, then tell the user:
 - what was installed
 - the absolute path of the launcher: `<repository folder>\备用启动脚本\启动可写 GIF 运行时.cmd`
 - they must fully quit Codex before double-clicking that launcher
-- **the last step, always mention it**: after restarting Codex, pick the skin in
-  Codex settings → Pets → Custom pets, otherwise the pet looks unchanged
+ - **the first-time last step, always mention it**: after restarting Codex, pick the skin
+   in Codex settings → Pets → Custom pets, otherwise the pet looks unchanged
+ - it is only needed once: the patch refreshes the UI when the pet folder changes, so after
+   that first pick, editing skins or animations in the studio takes effect right away - no
+   restart, no switching pets
 - the Skin Studio app path: `<repository folder>\dist\studio\SkinStudio.exe`,
   which is a standalone window for editing skins
 
@@ -186,8 +191,9 @@ report the real error, and tell the user to install the .NET 7 SDK and double-cl
 - Never run the root `一键启动.cmd` inside an AI session. It closes the
   Store build of Codex, which is the program you are running in.
 - Never claim that Codex was started. Starting it is the user's job.
-- Never say that restarting Codex is enough: after applying a skin the user must also
-  pick it in Codex settings → Pets → Custom pets.
+ - Never leave out the pet pick: on the first install the user must select the skin in
+   Codex settings → Pets → Custom pets. But do not tell them to restart for later changes:
+   once the skin has been picked, skin and animation edits apply by themselves.
 - On failure, give the user the real error text. Do not invent a success result.
 - When no Microsoft Store build of Codex is found, use `-PluginOnly` and say that
   full GIF playback needs the Store build.

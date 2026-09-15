@@ -28,15 +28,16 @@
 AI 会自己克隆仓库、先跑一次环境体检（Node、.NET SDK、磁盘空间），再装好插件和完整 GIF
 运行时，然后把体检结果和启动脚本路径告诉你。
 你只要完全退出 Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自定义宠物 里选中
-这套皮肤。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
+这套皮肤（只有第一次要选）。机器可读的步骤在 [AGENTS.md](AGENTS.md)。
 
 ### 2. 或者自己双击装
 
 1. 把 ZIP 完整解压到任意目录，别在压缩包里直接双击。
 2. 双击根目录的 `一键启动.cmd`。它会依次装好 Codex 插件、准备一份可写的 Codex 副本
    （第一次要复制约 1.8 GB，会慢几分钟）、应用酒狐皮肤，最后把 Codex 启动起来。
-3. 装完还不是最终效果：完全退出 Codex，用启动器重新打开，再到 Codex 设置 → 宠物 →
-   自定义宠物 里选中「酒狐（WineFox）」，宠物才会真的换动画。
+3. 然后完全退出 Codex，用启动器重新打开，再到 Codex 设置 → 宠物 → 自定义宠物 里选中
+   「酒狐（WineFox）」—— 这一次手动选中只有第一次要；以后在工坊里改皮肤，正在跑的宠物
+   会自己换上。
 4. 想改皮肤就双击 `启动皮肤工坊.cmd`，第一次会先编译，要等几分钟（这一步需要 .NET 7
    SDK，缺的话脚本会直接告诉你怎么补）。
 
@@ -76,9 +77,10 @@ Windows 电脑上可以直接双击运行。
 一键应用到 Codex，以及完整动画运行时的一键开启与恢复。导入会拦掉脚本、可执行文件、
 危险路径和异常大的压缩包。
 
-应用只是把九张 GIF 写进 Codex 的宠物目录，**不等于换好了**：要完全退出并重启 Codex，
-再到 Codex 设置 → 宠物 → 自定义宠物 里选中它，皮肤才会显示。工坊的应用确认框、
-成功提示和右侧检查器都会提醒这一步。
+应用后会立刻生效：装好完整动画运行时之后，九张 GIF 一写进 Codex 的宠物目录，正在跑的宠物
+就会自己换上新的动作 —— 不用重启，也不用切到别的宠物再切回来。只有**第一次**安装时要去
+Codex 设置 → 宠物 → 自定义宠物 里选中它一次；之后在工坊里换皮肤、换动作都是自动的。
+工坊的应用确认框、成功提示和右侧检查器都写了这一点。
 
 ## 会复制一份 Codex（以及为什么）
 
@@ -104,6 +106,8 @@ Windows 只给读权限：往里写会被系统直接拒绝，而且它受 Store
 - **占地方**：一份约 1.8 GB。Codex 升级后版本号变了会再复制一份新的，旧的那份可以自己删。
 - **不是随便哪个版本都能改**：补丁只认代码里记录过的版本和 SHA-256，Codex 更新后如果
   不认识就直接拒绝安装，而不是把新版程序改坏。被旧版本打过补丁的运行时可以原地升级。
+- **改了皮肤立刻生效**：补丁会在宠物目录有变化时叫 Codex 界面重新读盘，所以在工坊里换完
+  动作，正在跑的宠物当场就变，不用重启，也不用切换宠物。
 
 ## 环境要求
 
@@ -176,8 +180,8 @@ Tell me the check-up result and where the launcher is. I will start it myself.
 The agent clones the repo, runs an environment check-up (Node, .NET SDK, free disk space),
 installs the plugin plus the full GIF runtime, and reports the check-up result together
 with the launcher path. You then only have to fully quit Codex and double-click that
-launcher, and finally pick the skin in Codex settings → Pets → Custom pets. The
-machine-readable steps live in [AGENTS.md](AGENTS.md).
+launcher, and finally pick the skin in Codex settings → Pets → Custom pets (first install
+only). The machine-readable steps live in [AGENTS.md](AGENTS.md).
 
 ### 2. Or install it by double-clicking
 
@@ -185,8 +189,9 @@ machine-readable steps live in [AGENTS.md](AGENTS.md).
 2. Double-click `一键启动.cmd` in the repository root. It installs the Codex plugin,
    prepares a writable copy of Codex (the first run copies about 1.8 GB, so give it a few
    minutes), applies the WineFox skin and finally starts Codex.
-3. That is not the end of it: fully quit Codex, start it again with the launcher, then pick
-   the skin in Codex settings → Pets → Custom pets. Only then does the pet change.
+3. Then fully quit Codex, start it again with the launcher, and pick the skin in Codex
+   settings → Pets → Custom pets - that one pick is needed only the first time. After that,
+   editing skins in the studio changes the running pet right away.
 4. To edit skins, double-click `启动皮肤工坊.cmd`; the first run compiles it, which takes
    a few minutes and needs the .NET 7 SDK.
 
@@ -230,9 +235,12 @@ preview), skin metadata editing, duplicate/export/import of `.codexskin`, one-cl
 to Codex, and install/restore of the full animation runtime. Imports reject scripts,
 executables, dangerous paths and oversized archives.
 
-Applying only writes the nine GIFs into the Codex pet folder; it is **not** the last step.
-Fully quit and restart Codex, then pick the skin in Codex settings → Pets → Custom pets.
-The studio's confirm dialog, success toast and inspector all say so.
+Applying takes effect immediately: once the full animation runtime is installed, writing the
+nine GIFs into the Codex pet folder makes the running pet switch to the new animations by
+itself - no restart, and no switching to another pet and back. Only the **first** install needs
+one manual step: pick the skin in Codex settings → Pets → Custom pets. Later skin or animation
+changes made in the studio apply on their own. The studio's confirm dialog, success toast and
+inspector all say so.
 
 ## It copies Codex (and why)
 
@@ -262,6 +270,9 @@ Worth knowing:
 - **Only known builds are patched.** The patch accepts only the Codex versions and SHA-256
   hashes recorded in the source; after an update it refuses to install instead of breaking
   a newer build. Runtimes patched by older releases are upgraded in place.
+- **Skin edits show up live.** The patch makes the Codex UI re-read the pet folder whenever it
+  changes, so a running pet switches to your new animations right away - no restart, no pet
+  switching.
 
 ## Requirements
 

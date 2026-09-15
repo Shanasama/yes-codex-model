@@ -25,8 +25,16 @@ The optional direct-GIF bridge supports only explicitly listed bundle hashes. It
 operates on a user-writable shadow runtime, keeps a rollback backup, and does
 not change WindowsApps ownership or ACLs.
 
-## .codexskin
+## Live reload
 
+The bridge also watches the Codex `pets` directory from the main process. When the pet folder
+changes, it asks the renderer to re-read the pet query, so a running pet switches to the new
+animations within a second or two - no Codex restart, and no switching to another pet and back.
+The one manual step that remains is the first install: the user picks the skin once in Codex
+settings → Pets → Custom pets. Live updates need the patched writable runtime to be the one
+running; an unpatched Codex only re-reads the pet folder when a pet is selected.
+
+## .codexskin
 A `.codexskin` file is a ZIP with `skin.json`, one PNG/WebP fallback atlas, an optional thumbnail, and all nine GIF states. Executables, scripts, symlinks, absolute paths, traversal paths, encrypted entries, oversized entries, and invalid GIFs are rejected.
 
 The engine stores imported skins under `%CODEX_HOME%\skin-engine\skins` or `%USERPROFILE%\.codex\skin-engine\skins`. Applied pets are staged atomically under the normal Codex `pets` directory.

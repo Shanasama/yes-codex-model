@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { checkModuleSyntax } from "./lib/bundle-syntax.mjs";
+import { GIF_MARKER, HOT_RELOAD_MARKER, PETS_QUERY_KEY, hotReloadReport, mainHotReload, rendererHotReload, resolveQueryClientGetter, withQueryClientCapture } from "./lib/hot-reload.mjs";
 
 
 const TARGET_PROFILES = [
@@ -37,6 +38,7 @@ const TARGET_PROFILES = [
       ]),
       legacyPatchHashes: new Set([
         "2daa8f4a8202952070f1f0f3e67b11693e2047698ceecb913ea52bf9a2e18642",
+        "1e24affe40d3fcb3fb4cd98c09da087520ba877f1686afddbf074ea438537a4a",
       ]),
     },
     renderer: {
@@ -46,6 +48,7 @@ const TARGET_PROFILES = [
       ]),
       legacyPatchHashes: new Set([
         "214040bedf8e467e4dca5aaea62ba355cdb98c25c03d07bc12b8d0c001d268bd",
+        "86a09422e21dfafbc220bfd4dc4441a7c0e0859b31c87403d60df788909f6a12",
       ]),
     },
   },
@@ -66,6 +69,13 @@ const RENDERER_SOURCE_26_908 = RENDERER_SOURCE.slice(0, RENDERER_SOURCE.indexOf(
   + `function Alo(e){return e.spritesheetUrl==null?{assetRef:e.assetRef}:{petId:e.id,spriteRowCount:Tlo(e.spriteVersionNumber),spritesheetUrl:e.spritesheetUrl,animationUrls:e.animationUrls}}`;
 
 const RENDERER_COMPONENT_26_908 = `ruo=({assetMap:e,className:t,lookFrame:n,respondToHover:r=!1,source:i,state:a="idle"})=>{"use forget";let[o,s]=(0,tuo.useState)(!1),c=(0,tuo.useRef)(null),l=AXe(),u=i.animationUrls?.[a],d=r&&o&&!u?"jumping":a,p=i.assetRef==null?i.spriteRowCount:r4.rows,h=i.animationUrls?.[d]??null,f=h;return(0,tuo.useEffect)(()=>{let e=c.current;if(e==null)return;if(f!=null){e.style.backgroundPosition="center bottom";return}if(n!=null){e.style.backgroundPosition=Glo(n,p);return}let t=Ulo(d,l),r=t.frames,i=0,a=null;if(e.style.backgroundPosition=Glo(Wlo(r,i),p),r.length===1)return;let o=()=>{a=window.setTimeout(()=>{let n=i+1;if(n>=r.length){if(t.loopStartIndex!=null){i=t.loopStartIndex,e.style.backgroundPosition=Glo(Wlo(r,i),p),o();return}a=null;return}i=n,e.style.backgroundPosition=Glo(Wlo(r,i),p),o()},Wlo(r,i).frameDurationMs)};return o(),()=>{a!=null&&window.clearTimeout(a)}},[d,n,l,p,f]),(0,nuo.jsx)("div",{ref:c,className:S($lo.Root,t),"data-codex-pet-asset-ref":i.assetRef,"data-codex-pet-id":i.assetRef??i.petId,"data-codex-pet-state":d,onPointerEnter:()=>{r&&s(!0)},onPointerLeave:()=>{r&&s(!1)},style:{backgroundImage:"url("+(f??i.spritesheetUrl??e[i.assetRef])+")",backgroundPosition:f!=null?"center bottom":void 0,backgroundRepeat:f!=null?"no-repeat":void 0,backgroundSize:f!=null?"contain":p==null?void 0:r4.columns*100+"% "+p*100+"%"},"aria-hidden":"true"})}}));`;
+
+
+function stripMarkerDeclaration(text, marker) {
+  return text
+    .replaceAll(`const ${marker}=1;\n`, "")
+    .replaceAll(`const ${marker}=1;`, "");
+}
 
 
 function sha256(buffer) {
@@ -220,12 +230,13 @@ function transformMain(buffer, profile) {
   if (Buffer.byteLength(text, "utf8") !== buffer.length) throw new Error("Main bundle is not UTF-8");
   if (isCurrentPatch(buffer)) return buffer;
   text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_SYNC_V1__=(()=>{");
+  text = stripMarkerDeclaration(stripMarkerDeclaration(text, GIF_MARKER), HOT_RELOAD_MARKER);
   const modern = profile.id === "codex-26.908.4834";
   text = replaceSection(
     text,
     modern ? "async function p2(" : "async function e0(",
     modern ? "function m2(" : "function t0(",
-    modern ? MAIN_LOADER_26_908 : MAIN_LOADER,
+    (modern ? MAIN_LOADER_26_908 : MAIN_LOADER) + mainHotReload(),
   );
   const transformed = Buffer.from(text, "utf8");
   new vm.Script(text, { filename: profile.main.archivePath });
@@ -238,12 +249,14 @@ function transformRenderer(buffer, profile) {
   if (Buffer.byteLength(text, "utf8") !== buffer.length) throw new Error("Renderer bundle is not UTF-8");
   if (isCurrentPatch(buffer)) return buffer;
   text = stripLegacyUsage(text, "const __CODEX_SKIN_USAGE_RENDER_V1__=(()=>{");
+  text = stripMarkerDeclaration(stripMarkerDeclaration(text, GIF_MARKER), HOT_RELOAD_MARKER);
   const modern = profile.id === "codex-26.908.4834";
+  const queryClientGetter = resolveQueryClientGetter(text);
   text = replaceSection(
     text,
     modern ? "function Alo(e)" : "function eer(e)",
     modern ? "function jlo(" : "function ter(",
-    modern ? RENDERER_SOURCE_26_908 : RENDERER_SOURCE,
+    (modern ? RENDERER_SOURCE_26_908 : RENDERER_SOURCE) + rendererHotReload(),
   );
   if (!text.includes("animationUrls:e.animationDataUrls")) {
     text = replaceOnce(
@@ -256,7 +269,7 @@ function transformRenderer(buffer, profile) {
     text,
     modern ? "ruo=({assetMap:e" : "wer=({assetMap:e",
     modern ? "function auo(" : "function Eer(",
-    modern ? RENDERER_COMPONENT_26_908 : RENDERER_COMPONENT,
+    withQueryClientCapture(modern ? RENDERER_COMPONENT_26_908 : RENDERER_COMPONENT, queryClientGetter),
   );
   const transformed = Buffer.from(text, "utf8");
   checkModuleSyntax(text, profile.renderer.archivePath);
@@ -272,7 +285,8 @@ function isGifPatched(name, buffer) {
 
 
 function isCurrentPatch(buffer) {
-  return buffer.toString("utf8").includes("__CODEX_SKIN_GIF_RUNTIME_V1__");
+  const text = buffer.toString("utf8");
+  return text.includes(GIF_MARKER) && text.includes(HOT_RELOAD_MARKER);
 }
 
 
@@ -381,6 +395,7 @@ function report(asarPath, info, extra = {}) {
     asar: path.resolve(asarPath),
     asarSha256: sha256File(asarPath),
     headerSize: info.archive.headerSize,
+    hotReload: hotReloadReport(info),
     targets: Object.fromEntries(Object.entries(info.targets).map(([name, target]) => [name, {
       archivePath: target.archivePath,
       externalPath: target.externalPath,

@@ -551,8 +551,8 @@ export function runtimeStatus(requestedPath = null) {
     }
   });
   return reports.find((item) => item.state === "gif-patched")
-    || reports.find((item) => item.state === "baseline")
     || reports.find((item) => item.state === "gif-patched-legacy")
+    || reports.find((item) => item.state === "baseline")
     || reports[0];
 }
 
