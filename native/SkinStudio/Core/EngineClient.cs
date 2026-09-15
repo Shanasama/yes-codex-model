@@ -250,6 +250,18 @@ internal sealed class EngineClient : IDisposable
         return ParseSkin(data);
     }
 
+    public async Task<DeleteReceipt> DeleteSkinAsync(string id, CancellationToken cancellation = default)
+    {
+        var data = await SendDataAsync(HttpMethod.Post, $"/api/skin/{Uri.EscapeDataString(id)}/delete", Body.Json("{}"), cancellation);
+        return new DeleteReceipt
+        {
+            Id = data.Str("id"),
+            Name = data.Str("name"),
+            RemovedTo = data.Str("removedTo"),
+            DeletedAt = data.Str("deletedAt")
+        };
+    }
+
     public async Task<SkinInfo> ImportAsync(byte[] package, CancellationToken cancellation = default)
     {
         var data = await SendDataAsync(HttpMethod.Post, "/api/import", Body.Raw(package, "application/zip"), cancellation);

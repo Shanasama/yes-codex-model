@@ -331,6 +331,22 @@ export function updateSkin(id, changes) {
   return publicSkin(validateSkin(skin.root, { builtIn: false }));
 }
 
+export function deleteSkin(id) {
+  // 只删皮肤库里的这一份；自带皮肤随插件发布，删掉也会重新出现，所以先挡住。
+  ensureDataDirectories();
+  const skin = getSkin(id);
+  if (skin.builtIn) throw new Error("自带皮肤不能删除：它随插件一起发布，删掉下次还会出现。想改就先复制一份。");
+  const removedTo = path.join(DATA_ROOT, "backups", "skins", skin.id, timestamp());
+  fs.mkdirSync(path.dirname(removedTo), { recursive: true });
+  fs.renameSync(skin.root, removedTo);
+  return {
+    id: skin.id,
+    name: skin.name,
+    removedTo,
+    deletedAt: new Date().toISOString()
+  };
+}
+
 export function importSkin(input) {
   ensureDataDirectories();
   const entries = readZip(input);

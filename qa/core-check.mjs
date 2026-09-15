@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   STATES,
   applySkin,
+  deleteSkin,
   exportSkin,
   getSkin,
   importSkin,
@@ -64,6 +65,15 @@ try {
   let traversalRejected = false;
   try { createZip([{ name: "../escape.txt", data: Buffer.from("x") }], blockedPath); } catch (error) { traversalRejected = /危险路径/.test(error.message); }
   report.checks.traversalRejected = traversalRejected;
+
+  const removed = deleteSkin(imported.id);
+  report.checks.deleteSkin = !fs.existsSync(path.join(testHome, "skin-engine", "skins", imported.id))
+    && fs.existsSync(path.join(removed.removedTo, "skin.json"))
+    && listSkins().every((skin) => skin.id !== imported.id);
+
+  let builtInProtected = false;
+  try { deleteSkin("winefox-pixel-classic"); } catch (error) { builtInProtected = /自带皮肤/.test(error.message); }
+  report.checks.builtInProtected = builtInProtected;
 
   report.ok = Object.values(report.checks).every(Boolean);
 } finally {

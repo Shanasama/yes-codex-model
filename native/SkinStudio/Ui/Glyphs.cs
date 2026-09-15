@@ -24,7 +24,8 @@ internal enum Glyph
     Warning,
     Info,
     Paw,
-    Plus
+    Plus,
+    Trash
 }
 
 /// <summary>矢量图标：全部按 16×16 视盒描述，绘制时等比缩放到目标方框。</summary>
@@ -184,6 +185,14 @@ internal static class Glyphs
             case Glyph.Plus:
                 graphics.DrawLine(pen, P(8f, 3.6f), P(8f, 12.4f));
                 graphics.DrawLine(pen, P(3.6f, 8f), P(12.4f, 8f));
+                break;
+
+            case Glyph.Trash:
+                graphics.DrawLine(pen, P(2.8f, 4.6f), P(13.2f, 4.6f));
+                graphics.DrawLines(pen, new[] { P(6.2f, 4.6f), P(6.2f, 2.8f), P(9.8f, 2.8f), P(9.8f, 4.6f) });
+                graphics.DrawLines(pen, new[] { P(4.4f, 4.6f), P(5.2f, 13.2f), P(10.8f, 13.2f), P(11.6f, 4.6f) });
+                graphics.DrawLine(pen, P(6.9f, 7f), P(7.1f, 11.4f));
+                graphics.DrawLine(pen, P(9.1f, 7f), P(8.9f, 11.4f));
                 break;
         }
     }

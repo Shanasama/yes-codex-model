@@ -104,6 +104,18 @@ internal sealed class ApplyReceipt
         DateTimeOffset.TryParse(AppliedAt, out var value) ? value.ToLocalTime() : null;
 }
 
+internal sealed class DeleteReceipt
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string RemovedTo { get; init; } = "";
+    public string DeletedAt { get; init; } = "";
+
+    /// <summary>删掉的东西只是挪到备份目录，想反悔就按这个路径找回来。</summary>
+    public DateTimeOffset? When =>
+        DateTimeOffset.TryParse(DeletedAt, out var value) ? value.ToLocalTime() : null;
+}
+
 internal sealed class PathsInfo
 {
     public string Plugin { get; init; } = "";

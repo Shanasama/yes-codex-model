@@ -74,7 +74,8 @@ Windows 电脑上可以直接双击运行。
 
 工坊能做的事：皮肤库与搜索、动画实时预览（播放 / 暂停、适应 / 原始尺寸）、九张状态卡片
 逐个替换 GIF（GIF 也可以直接拖到预览区）、编辑皮肤信息、复制 / 导出 / 导入 `.codexskin`、
-一键应用到 Codex，以及完整动画运行时的一键开启与恢复。导入会拦掉脚本、可执行文件、
+一键应用到 Codex、删除皮肤库里的条目（素材移到备份目录，可以找回），以及完整动画运行时
+的一键开启与恢复。导入会拦掉脚本、可执行文件、
 危险路径和异常大的压缩包。
 
 应用后会立刻生效：装好完整动画运行时之后，九张 GIF 一写进 Codex 的宠物目录，正在跑的宠物
@@ -231,8 +232,9 @@ to double-click `启动皮肤工坊.cmd` again. No plugin reinstall is needed.
 
 The studio does: skin library and search, live animation preview (play/pause, fit/original
 size), nine state cards with per-state GIF replacement (you can also drop a GIF onto the
-preview), skin metadata editing, duplicate/export/import of `.codexskin`, one-click apply
-to Codex, and install/restore of the full animation runtime. Imports reject scripts,
+preview), skin metadata editing, duplicate/delete/export/import of `.codexskin`, one-click
+apply to Codex, and install/restore of the full animation runtime. Deleted skins move to the
+backup folder instead of being destroyed. Imports reject scripts,
 executables, dangerous paths and oversized archives.
 
 Applying takes effect immediately: once the full animation runtime is installed, writing the

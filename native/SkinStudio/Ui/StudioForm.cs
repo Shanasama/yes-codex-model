@@ -76,6 +76,7 @@ internal sealed class StudioForm : Form
     private readonly StudioLabel _subtitle = new();
     private readonly StudioButton _copyButton = new();
     private readonly StudioButton _exportButton = new();
+    private readonly StudioButton _deleteButton = new();
     private readonly StudioButton _applyButton = new();
     private readonly PreviewStage _stage = new();
     private readonly IconButton _playButton = new();
@@ -268,6 +269,12 @@ internal sealed class StudioForm : Form
         _exportButton.BackColor = Theme.Canvas;
         _exportButton.Size = new Size(84, 34);
 
+        _deleteButton.Text = "删除";
+        _deleteButton.Icon = Glyph.Trash;
+        _deleteButton.Variant = ButtonVariant.Danger;
+        _deleteButton.BackColor = Theme.Canvas;
+        _deleteButton.Size = new Size(84, 34);
+
         _applyButton.Text = "应用到 Codex";
         _applyButton.Icon = Glyph.Check;
         _applyButton.Variant = ButtonVariant.Primary;
@@ -312,6 +319,7 @@ internal sealed class StudioForm : Form
         _center.Controls.AddRange(new Control[]
         {
             _title, _subtitle, _copyButton, _exportButton, _applyButton,
+            _deleteButton,
             _stage, _tilesLabel, _tilesHint, _tilesChip, _replaceButton, _tilesPanel
         });
     }
@@ -469,6 +477,7 @@ internal sealed class StudioForm : Form
 
         _copyButton.Click += (_, _) => _ = DuplicateAsync();
         _exportButton.Click += (_, _) => _ = ExportAsync();
+        _deleteButton.Click += (_, _) => _ = DeleteAsync();
         _applyButton.Click += (_, _) => _ = ApplyAsync();
 
         _playButton.Click += (_, _) => { _stage.SetPlaying(!_stage.Playing); UpdatePlayButton(); };
@@ -597,8 +606,9 @@ internal sealed class StudioForm : Form
         _applyButton.SetBounds(right - _applyButton.Width, top + 4, _applyButton.Width, 34);
         _exportButton.SetBounds(_applyButton.Left - 8 - _exportButton.Width, top + 4, _exportButton.Width, 34);
         _copyButton.SetBounds(_exportButton.Left - 8 - _copyButton.Width, top + 4, _copyButton.Width, 34);
+        _deleteButton.SetBounds(_copyButton.Left - 8 - _deleteButton.Width, top + 4, _deleteButton.Width, 34);
 
-        var titleWidth = Math.Max(80, _copyButton.Left - 12 - pad);
+        var titleWidth = Math.Max(80, _deleteButton.Left - 12 - pad);
         _title.SetBounds(pad, top, titleWidth, 26);
         _subtitle.SetBounds(pad, top + 27, titleWidth, 18);
 
@@ -638,9 +648,11 @@ internal sealed class StudioForm : Form
         _headerCompact = compact;
         _copyButton.Text = compact ? "" : "复制";
         _exportButton.Text = compact ? "" : "导出";
+        _deleteButton.Text = compact ? "" : "删除";
         _applyButton.Text = compact ? "" : "应用到 Codex";
         _copyButton.Size = new Size(compact ? 36 : 84, 34);
         _exportButton.Size = new Size(compact ? 36 : 84, 34);
+        _deleteButton.Size = new Size(compact ? 36 : 84, 34);
         _applyButton.Size = new Size(compact ? 42 : 126, 34);
     }
 
@@ -1093,6 +1105,7 @@ internal sealed class StudioForm : Form
     {
         _copyButton.Enabled = enabled;
         _exportButton.Enabled = enabled;
+        _deleteButton.Enabled = enabled;
         _applyButton.Enabled = enabled;
         _saveMeta.Enabled = enabled;
         _replaceButton.Enabled = enabled;
@@ -1162,6 +1175,37 @@ internal sealed class StudioForm : Form
             RenderSkinList();
             await RenderSelectionAsync();
             ShowToast($"已创建「{created.DisplayName}」");
+        });
+    }
+
+    private async Task DeleteAsync()
+    {
+        var skin = _selected;
+        if (skin is null || _busy) return;
+        if (skin.BuiltIn)
+        {
+            ShowToast("自带皮肤随插件发布，删掉下次还会出现；想改就先点「复制」", true);
+            return;
+        }
+
+        if (!StudioDialog.Confirm(this, "删除皮肤",
+                $"将从皮肤库里删除「{skin.DisplayName}」和它的九张动作素材。素材只是挪到备份目录，可以按提示路径找回来；已经应用到 Codex 的宠物不受影响。",
+                "删除", danger: true)) return;
+
+        await RunBusyAsync("正在删除皮肤…", async () =>
+        {
+            var receipt = await _engine.DeleteSkinAsync(skin.Id, _lifetime.Token);
+            _model = _model with { Skins = _model.Skins.Where(item => item.Id != receipt.Id).ToList() };
+            if (_selected?.Id == receipt.Id)
+            {
+                _selected = _model.Skins.FirstOrDefault(item => item.Valid) ?? _model.Skins.FirstOrDefault();
+                _stateId = _selected?.OrderedStates.FirstOrDefault(state => state.Id == "idle")?.Id
+                           ?? _selected?.OrderedStates.FirstOrDefault()?.Id ?? "idle";
+                _byteCache.Clear();
+            }
+            RenderSkinList();
+            await RenderSelectionAsync();
+            ShowToast($"已删除「{receipt.Name}」，素材在 {receipt.RemovedTo}");
         });
     }
 

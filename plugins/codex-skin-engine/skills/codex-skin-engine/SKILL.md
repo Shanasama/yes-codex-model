@@ -12,7 +12,8 @@ For direct requests:
 - Use `list_skins` or `skin_status` for inspection.
 - Use `import_skin` and `export_skin` for shareable `.codexskin` packages.
 - Use `replace_state_gif` only for the requested state. The engine copies the source GIF byte-for-byte, checks its structure, records its frame count, and updates SHA-256.
-- Use `apply_skin` when the user asks to install a chosen skin. Report the install path and any backup path from the result.
+ - Use `apply_skin` when the user asks to install a chosen skin. Report the install path and any backup path from the result.
+ - Use `delete_skin` to remove a user skin from the library. The files move to the skin-engine backup folder instead of being destroyed, and bundled presets cannot be deleted - say so instead of retrying.
  - After `apply_skin`, tell the user to pick the skin once in Codex settings → Pets → Custom pets. Applying only writes the GIFs into the pet folder; it does not switch the active pet by itself. That pick is needed on the first install only: when the patched writable runtime is running, later applies show up on the running pet by themselves, because the patch tells the Codex UI to re-read the pet folder. Do not ask for a restart or a re-pick for those.
 - Use `runtime_bridge` with `status` for diagnostics.
 

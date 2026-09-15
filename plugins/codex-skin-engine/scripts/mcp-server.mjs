@@ -3,6 +3,7 @@ import readline from "node:readline";
 import {
   applySkin,
   bootstrap,
+  deleteSkin,
   exportSkin,
   importSkinPath,
   listSkins,
@@ -77,6 +78,16 @@ const TOOLS = [
     }
   },
   {
+    name: "delete_skin",
+    description: "从皮肤库里删除一套皮肤：素材移到备份目录，可以再找回来。自带皮肤不能删除。",
+    inputSchema: {
+      type: "object",
+      properties: { skin_id: { type: "string" } },
+      required: ["skin_id"],
+      additionalProperties: false
+    }
+  },
+  {
     name: "runtime_bridge",
     description: "检查、安装或回滚原始 GIF 运行时桥接。安装和回滚后需要重启 Codex。",
     inputSchema: {
@@ -107,6 +118,7 @@ function callTool(name, args) {
     case "export_skin": return exportSkin(args.skin_id, args.destination || null);
     case "replace_state_gif": return replaceState(args.skin_id, args.state, fs.readFileSync(args.gif_path)).skin;
     case "apply_skin": return applySkin(args.skin_id);
+    case "delete_skin": return deleteSkin(args.skin_id);
     case "runtime_bridge":
       if (args.action === "status") return runtimeStatus(args.asar_path || null);
       if (args.action === "install") return patchRuntime(args.asar_path || null);

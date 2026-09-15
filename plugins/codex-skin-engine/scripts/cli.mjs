@@ -2,6 +2,7 @@ import fs from "node:fs";
 import {
   applySkin,
   bootstrap,
+  deleteSkin,
   exportSkin,
   getSkin,
   importSkinPath,
@@ -25,6 +26,7 @@ switch (command) {
   case "import": result = importSkinPath(args[0]); break;
   case "export": result = exportSkin(args[0], args[1] || null); break;
   case "apply": result = applySkin(args[0]); break;
+  case "delete": result = deleteSkin(args[0]); break;
   case "runtime-status": result = runtimeStatus(args[0] || null); break;
   case "runtime-patch": result = patchRuntime(args[0] || null); break;
   case "runtime-restore": result = restoreRuntime(args[0] || null); break;
@@ -38,6 +40,7 @@ switch (command) {
         "node scripts/cli.mjs import <file.codexskin>",
         "node scripts/cli.mjs export <skin-id> [output.codexskin]",
         "node scripts/cli.mjs apply <skin-id>",
+        "node scripts/cli.mjs delete <skin-id>",
         "node scripts/cli.mjs runtime-status [app.asar]",
         "node scripts/cli.mjs runtime-patch [app.asar]",
         "node scripts/cli.mjs runtime-restore [app.asar]",

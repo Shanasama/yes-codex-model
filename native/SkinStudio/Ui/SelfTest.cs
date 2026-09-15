@@ -81,6 +81,17 @@ internal static class SelfTest
         Application.DoEvents();
         Inspect(prompt, prompt.ClientSize, failures, ref checks);
         prompt.Close();
+
+        using var removal = StudioDialog.CreateForTest("删除皮肤",
+            "将从皮肤库里删除「雪狐」和它的九张动作素材。素材只是挪到备份目录，可以按提示路径找回来；已经应用到 Codex 的宠物不受影响。",
+            "删除", true);
+        removal.StartPosition = FormStartPosition.Manual;
+        removal.ShowInTaskbar = false;
+        removal.Location = new Point(-6000, -6000);
+        removal.Show();
+        Application.DoEvents();
+        Inspect(removal, removal.ClientSize, failures, ref checks);
+        removal.Close();
     }
 
     private static void CheckHitTest(List<string> failures, ref int checks)

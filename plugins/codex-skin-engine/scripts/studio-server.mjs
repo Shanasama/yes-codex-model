@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   applySkin,
   bootstrap,
+  deleteSkin,
   duplicateSkin,
   exportSkin,
   importSkin,
@@ -133,6 +134,11 @@ async function handleApi(request, response, url) {
   if (request.method === "POST" && duplicateMatch) {
     const body = await readJsonBody(request);
     return sendJson(response, 201, { ok: true, data: duplicateSkin(decodeURIComponent(duplicateMatch[1]), body.name) });
+  }
+
+  const deleteMatch = url.pathname.match(/^\/api\/skin\/([^/]+)\/delete$/);
+  if (request.method === "POST" && deleteMatch) {
+    return sendJson(response, 200, { ok: true, data: deleteSkin(decodeURIComponent(deleteMatch[1])) });
   }
 
   const skinMatch = url.pathname.match(/^\/api\/skin\/([^/]+)$/);
