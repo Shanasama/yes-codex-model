@@ -129,8 +129,19 @@ function Install-PluginAndSkin {
     Invoke-Required $CodexExecutable @("plugin", "marketplace", "add", $projectRoot) "本地插件市场登记"
 
     Write-Step "检查并安装 codex-skin-engine 插件。"
-    $pluginListText = (& $CodexExecutable plugin list --marketplace personal --json 2>&1 | Out-String)
-    if ($LASTEXITCODE -ne 0) {
+    # codex 会往 stderr 打警告（例如 PATH 别名）；$ErrorActionPreference=Stop 时这种输出会
+    # 直接把安装打断，所以这里临时放开，并只把 stdout 当 JSON 读。
+    $pluginListText = ""
+    $pluginListExit = 0
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $pluginListText = (& $CodexExecutable plugin list --marketplace personal --json 2>$null | Out-String)
+        $pluginListExit = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($pluginListExit -ne 0) {
         throw "无法读取本地插件状态：$pluginListText"
     }
     try {
@@ -148,8 +159,16 @@ function Install-PluginAndSkin {
         Invoke-Required $CodexExecutable @("plugin", "add", "codex-skin-engine@personal") "插件安装"
     }
 
-    Write-Step "安装 WineFox 原版酒狐皮肤。"
-    Invoke-Required $NodeExecutable @($cliPath, "apply", "winefox-pixel-classic") "皮肤安装"
+    # 自动带上默认皮肤；已经在宠物目录里就保留用户现在的版本，不覆盖。
+    $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE ".codex" }
+    $defaultPet = Join-Path $codexHome "pets\winefox-pixel-classic\pet.json"
+    if (Test-Path -LiteralPath $defaultPet -PathType Leaf) {
+        Write-Step "默认皮肤「酒狐（WineFox）」已经在宠物目录里，保留你现在这份。"
+    } else {
+        Write-Step "应用默认皮肤「酒狐（WineFox）」。"
+        Invoke-Required $NodeExecutable @($cliPath, "apply", "winefox-pixel-classic") "皮肤安装"
+        Write-Host "已自动应用默认皮肤「酒狐（WineFox）」，装好就能用。" -ForegroundColor Green
+    }
 }
 
 function Get-StoreProcesses {
@@ -245,6 +264,21 @@ function Write-PetSelectionHint {
     } else {
         Write-Host "  不做这一步的话，宠物看起来不会有任何变化。" -ForegroundColor Cyan
     }
+}
+
+function Write-StudioHint {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    $studioExe = Join-Path $ProjectRoot "dist\studio\SkinStudio.exe"
+    Write-Host ""
+    Write-Host "皮肤管理器（皮肤工坊）：想换皮肤、换动作就打开它。" -ForegroundColor Cyan
+    if (Test-Path -LiteralPath $studioExe -PathType Leaf) {
+        Write-Host "  双击这个：$studioExe" -ForegroundColor Cyan
+        Write-Host "  或者双击根目录的 启动皮肤工坊.cmd（效果一样）。" -ForegroundColor Cyan
+    } else {
+        Write-Host "  双击根目录的 启动皮肤工坊.cmd：第一次会先编译，要等几分钟。" -ForegroundColor Cyan
+        Write-Host "  编译需要 .NET 7 SDK，缺的话脚本会直接告诉你怎么补。" -ForegroundColor Cyan
+    }
+    Write-Host "  在工坊里改完动作不用重启：宠物会自己换上（第一次装的要先去设置里选一次宠物）。" -ForegroundColor Cyan
 }
 
 function Get-DotnetSdkList {
@@ -357,6 +391,7 @@ if ($PluginOnly) {
     }
     Write-Host "请新建一个 Codex 任务以载入插件。" -ForegroundColor Green
     Write-PetSelectionHint
+    Write-StudioHint -ProjectRoot $projectRoot
     if ($studio.Status -eq "Ready" -or $studio.Status -eq "Skipped") { exit 0 }
     exit 2
 }
@@ -416,6 +451,7 @@ if ($NoLaunch) {
     }
     Write-Host "使用前请完全退出 Codex，再双击上面的启动器。" -ForegroundColor Green
     Write-PetSelectionHint -GifRuntime
+    Write-StudioHint -ProjectRoot $projectRoot
     if ($studio.Status -eq "Ready" -or $studio.Status -eq "Skipped") { exit 0 }
     exit 2
 }
@@ -434,3 +470,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "完成：WineFox GIF runtime 已启动。" -ForegroundColor Green
 Write-PetSelectionHint -GifRuntime
+Write-StudioHint -ProjectRoot $projectRoot

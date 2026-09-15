@@ -82,13 +82,18 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_cl
 确认输出里没有报错，然后告诉用户：
 
 - 已经装好了什么
-- 启动器的绝对路径：`<仓库目录>\备用启动脚本\启动可写 GIF 运行时.cmd`
-- 启动前要完全退出 Codex，然后双击这个启动器
+- 启动器的绝对路径：`<仓库目录>\一键启动.cmd`。以后每次想用带皮肤效果的 Codex 也是双击它，
+  已经装好的部分会自动跳过，不会重复复制那 1.8 GB
+- 不用让用户先手动关 Codex：双击启动器后它自己会问要不要关掉 Store 版 Codex
  - **第一次的最后一步（必须说）**：重启 Codex 后，去 Codex 设置 → 宠物 → 自定义宠物 里
    选中刚应用的皮肤，宠物才会变；不选的话看起来跟没装一样
  - 只有第一次需要这一步：补丁会在宠物目录变化时自动刷新界面，所以选中过一次之后，在工坊里
    换皮肤、换动作会立刻生效，不用重启、也不用切换宠物
 - 皮肤工坊窗口程序的路径：`<仓库目录>\dist\studio\SkinStudio.exe`，双击就能改皮肤
+  （等于双击根目录的 `启动皮肤工坊.cmd`）
+
+默认皮肤「酒狐（WineFox）」安装脚本会自动应用，不用让用户手动导：只在他已经自己改过
+皮肤的情况下，提醒一句脚本会保留他现有的版本、不覆盖。
 
 只安装插件时，告诉用户双击根目录的 `启动皮肤工坊.cmd`，并新建一个 Codex
 任务让插件生效。
@@ -242,15 +247,20 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install_one_cl
 Check that the output contains no errors, then tell the user:
 
 - what was installed
-- the absolute path of the launcher: `<repository folder>\备用启动脚本\启动可写 GIF 运行时.cmd`
-- they must fully quit Codex before double-clicking that launcher
+- the absolute path of the launcher: `<repository folder>\一键启动.cmd`. That same file starts the
+  skinned Codex from then on, skipping everything already installed instead of copying 1.8 GB again
+- do not tell the user to quit Codex by hand: the launcher asks before closing the Store build
  - **the first-time last step, always mention it**: after restarting Codex, pick the skin
    in Codex settings → Pets → Custom pets, otherwise the pet looks unchanged
  - it is only needed once: the patch refreshes the UI when the pet folder changes, so after
    that first pick, editing skins or animations in the studio takes effect right away - no
    restart, no switching pets
-- the Skin Studio app path: `<repository folder>\dist\studio\SkinStudio.exe`,
-  which is a standalone window for editing skins
+- the Skin Studio app path: `<repository folder>\dist\studio\SkinStudio.exe`, the standalone skin
+  window (same as double-clicking `启动皮肤工坊.cmd` in the repository root)
+
+The installer applies the default "WineFox" skin by itself, so never send the user off to import it
+manually. Only when the user already edited that skin, mention that the script keeps their version
+instead of overwriting it.
 
 For a plugin-only install, tell the user to double-click `启动皮肤工坊.cmd` in the
 repository root, and to open a new Codex task so the plugin loads.

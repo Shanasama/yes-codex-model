@@ -44,13 +44,16 @@ Codex，双击它给的那个启动器，再去 Codex 设置 → 宠物 → 自�
 1. 把 ZIP 完整解压到任意目录，别在压缩包里直接双击。
 2. 双击根目录的 `一键启动.cmd`。它会依次装好 Codex 插件、准备一份可写的 Codex 副本
    （第一次要复制约 1.8 GB，会慢几分钟）、应用酒狐皮肤，最后把 Codex 启动起来。
+   默认皮肤「酒狐（WineFox）」会自动应用，不用你自己导；只有你已经改过它时，脚本才会
+   保留你那份、不覆盖。
 3. 然后完全退出 Codex，用启动器重新打开，再到 Codex 设置 → 宠物 → 自定义宠物 里选中
    「酒狐（WineFox）」—— 这一次手动选中只有第一次要；以后在工坊里改皮肤，正在跑的宠物
    会自己换上。
 4. 想改皮肤就双击 `启动皮肤工坊.cmd`，第一次会先编译，要等几分钟（这一步需要 .NET 7
    SDK，缺的话脚本会直接告诉你怎么补）。
 
-只想做其中一步的话，`备用启动脚本\` 里有三个拆开的入口：
+日常只要一个入口：`一键启动.cmd`（装好并启动），改皮肤用 `启动皮肤工坊.cmd`。
+只想做其中一步、或者排查问题的话，`备用启动脚本\` 里有三个拆开的入口：
 
 | 文件 | 作用 |
 | --- | --- |
@@ -105,8 +108,8 @@ Windows 只给读权限：往里写会被系统直接拒绝，而且它受 Store
    1.8 GB、五千多个文件，第一次要等几分钟。
 2. 只改这份副本里的两个打包 JS（`app.asar` 里的主进程和渲染层），让它按宠物目录里
    `pet.json` 的 `animationPaths` 播放九种状态的 GIF。
-3. 以后启动的是这份副本（`一键启动.cmd` 的最后一步，或
-   `备用启动脚本\启动可写 GIF 运行时.cmd`）。Store 版 Codex 还在原地，照常能打开。
+3. 以后启动的是这份副本：双击根目录的 `一键启动.cmd`（已经装好时会直接启动，几秒钟）。
+   Store 版 Codex 还在原地，照常能打开。
 
 你可能关心的几点：
 
@@ -210,14 +213,17 @@ machine-readable steps, including how to re-adapt after a Codex update, live in
 2. Double-click `一键启动.cmd` in the repository root. It installs the Codex plugin,
    prepares a writable copy of Codex (the first run copies about 1.8 GB, so give it a few
    minutes), applies the WineFox skin and finally starts Codex.
+   The default WineFox skin is applied automatically - you never have to import it by hand. If
+   you already edited that skin, the installer keeps your version instead of overwriting it.
 3. Then fully quit Codex, start it again with the launcher, and pick the skin in Codex
    settings → Pets → Custom pets - that one pick is needed only the first time. After that,
    editing skins in the studio changes the running pet right away.
 4. To edit skins, double-click `启动皮肤工坊.cmd`; the first run compiles it, which takes
    a few minutes and needs the .NET 7 SDK.
 
-If you only need part of the flow, the `备用启动脚本\` ("backup launchers") folder has
-three split entries:
+Day to day there is one entry point: `一键启动.cmd` (install and start), plus
+`启动皮肤工坊.cmd` to edit skins. If you need a single step or you are debugging, the
+`备用启动脚本\` ("backup launchers") folder has three split entries:
 
 | File | What it does |
 | --- | --- |
@@ -277,9 +283,9 @@ That leaves one way to get real GIF animations:
    1.8 GB and 5000+ files, so the first run takes a few minutes.
 2. Patch only that copy: two bundled JS files inside `app.asar` (main process and renderer)
    so the pet plays GIFs from `animationPaths` in `pet.json` for all nine states.
-3. Launch that copy from then on (the last step of `一键启动.cmd`, or
-   `备用启动脚本\启动可写 GIF 运行时.cmd`). The Store build stays where it is and still
-   opens normally.
+3. Launch that copy from then on by double-clicking `一键启动.cmd` in the repository root; when
+   everything is already installed it just starts, in a couple of seconds. The Store build stays
+   where it is and still opens normally.
 
 Worth knowing:
 
