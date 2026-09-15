@@ -1,5 +1,6 @@
 @echo off
 setlocal DisableDelayedExpansion
+chcp 65001 >nul
 for %%I in ("%~dp0..") do set "PROJECT_ROOT=%%~fI"
 set "SCRIPT=%PROJECT_ROOT%\plugins\codex-skin-engine\scripts\install_shadow_runtime.ps1"
 if not exist "%SCRIPT%" (
@@ -25,6 +26,9 @@ if /I "%CODEX_SKIN_PLAN%"=="1" (
 ) else if not "%EXIT_CODE%"=="0" (
   echo Shadow runtime launch failed. Exit code: %EXIT_CODE%
   echo Close all Store Codex processes before retrying.
+  ) else (
+    echo 已经用可写 GIF 运行时启动 Codex。第一次装的话，去 Codex 设置 → 宠物 → 自定义宠物
+    echo 里选中皮肤；选过一次之后，在工坊里换皮肤、换动作会立刻生效，不用重启。
 )
 pause
 exit /b %EXIT_CODE%
